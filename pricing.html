@@ -1,0 +1,1011 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="ReviewGuards Preise – erfolgsbasiert, keine Vorauszahlung. Nur wenn wir liefern, zahlst du. Ab €149 pro entfernter Bewertung.">
+  <title>Preise | ReviewGuards</title>
+
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; font-size: 16px; }
+    body { font-family: Arial, Helvetica, sans-serif; background: #fff; color: #000; line-height: 1.6; overflow-x: hidden; }
+    a { text-decoration: none; color: inherit; }
+
+    :root {
+      --black:       #000000;
+      --white:       #ffffff;
+      --blue:        #3551FF;
+      --blue-dim:    rgba(53,81,255,0.1);
+      --orange:      #fb8e28;
+      --gray-dark:   #111111;
+      --gray-mid:    #888888;
+      --gray-light:  #f5f5f5;
+      --gray-border: #e0e0e0;
+      --section-pad: clamp(60px, 8vw, 110px);
+      --container:   1200px;
+      --pad-x:       clamp(20px, 5vw, 40px);
+    }
+
+    .container { max-width: var(--container); margin: 0 auto; padding: 0 var(--pad-x); }
+
+    .fade-up { opacity: 0; transform: translateY(28px); transition: opacity 0.6s ease, transform 0.6s ease; }
+    .fade-up.visible { opacity: 1; transform: translateY(0); }
+    .fade-up[data-delay="1"] { transition-delay: 0.1s; }
+    .fade-up[data-delay="2"] { transition-delay: 0.2s; }
+    .fade-up[data-delay="3"] { transition-delay: 0.3s; }
+    .fade-up[data-delay="4"] { transition-delay: 0.4s; }
+
+    .label {
+      display: inline-block;
+      font-size: 0.75rem;
+      font-weight: 700;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: var(--gray-mid);
+      margin-bottom: 12px;
+    }
+
+    /* ===== NAVBAR ===== */
+    #navbar {
+      position: fixed; top: 0; left: 0; right: 0; z-index: 1000;
+      background: var(--black);
+      border-bottom: 1px solid #1a1a1a;
+      height: 68px;
+      display: flex; align-items: center;
+      transition: box-shadow 0.3s;
+    }
+    #navbar.scrolled { box-shadow: 0 4px 30px rgba(0,0,0,0.6); }
+
+    .nav-inner { display: flex; align-items: center; justify-content: space-between; width: 100%; gap: 40px; }
+    .logo { font-size: 1.3rem; font-weight: 900; color: var(--white); letter-spacing: -0.02em; }
+    .logo span { color: var(--blue); }
+
+    .nav-links { display: none; list-style: none; gap: 40px; flex: 1; justify-content: center; }
+    .nav-links a { font-size: 0.9rem; color: #ccc; transition: color 0.2s; }
+    .nav-links a:hover, .nav-links a.active { color: var(--white); }
+
+    .nav-right { display: flex; align-items: center; gap: 16px; }
+    .nav-cta { display: none; }
+
+    .btn {
+      display: inline-block;
+      padding: 12px 28px;
+      font-size: 0.95rem;
+      font-weight: 700;
+      font-family: Arial, Helvetica, sans-serif;
+      border-radius: 27px;
+      border: none;
+      cursor: pointer;
+      transition: filter 0.2s, transform 0.2s;
+    }
+    .btn:hover { filter: brightness(1.08); transform: translateY(-1px); }
+    .btn-blue { background: var(--blue); color: var(--white); }
+    .btn-outline-white { background: transparent; color: var(--white); border: 2px solid rgba(255,255,255,0.35); }
+    .btn-outline-white:hover { background: var(--white); color: var(--black); filter: none; border-color: var(--white); }
+
+    .hamburger { display: flex; flex-direction: column; gap: 5px; cursor: pointer; padding: 8px; background: none; border: none; }
+    .hamburger span { display: block; width: 24px; height: 2px; background: var(--white); transition: all 0.3s; transform-origin: center; }
+    .hamburger.open span:nth-child(1) { transform: translateY(7px) rotate(45deg); }
+    .hamburger.open span:nth-child(2) { opacity: 0; }
+    .hamburger.open span:nth-child(3) { transform: translateY(-7px) rotate(-45deg); }
+
+    #mobile-menu {
+      position: fixed; inset: 0; background: var(--black); z-index: 999;
+      display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 36px;
+      transform: translateX(100%); transition: transform 0.35s ease;
+    }
+    #mobile-menu.open { transform: translateX(0); }
+    #mobile-menu a { font-size: 1.5rem; font-weight: 700; color: var(--white); }
+    #mobile-menu a:hover { color: var(--orange); }
+
+    @media (min-width: 900px) {
+      .nav-links { display: flex; }
+      .nav-cta { display: inline-block; }
+      .hamburger { display: none; }
+    }
+
+    /* ===== HERO ===== */
+    #hero {
+      background: var(--black);
+      padding-top: 68px;
+      padding-bottom: clamp(48px,6vw,80px);
+      text-align: center;
+      position: relative;
+      overflow: hidden;
+    }
+
+    #hero::before {
+      content: '';
+      position: absolute;
+      top: -100px; left: 50%; transform: translateX(-50%);
+      width: 700px; height: 400px;
+      background: radial-gradient(ellipse, rgba(53,81,255,0.12) 0%, transparent 70%);
+      pointer-events: none;
+    }
+
+    .hero-inner { padding-top: clamp(48px,6vw,80px); position: relative; }
+
+    .hero-inner h1 {
+      font-size: clamp(2rem, 5vw, 3.4rem);
+      font-weight: 900;
+      color: var(--white);
+      line-height: 1.12;
+      letter-spacing: -0.02em;
+      margin-bottom: 18px;
+    }
+
+    .hero-sub {
+      font-size: clamp(0.95rem, 2vw, 1.1rem);
+      color: #aaa;
+      max-width: 560px;
+      margin: 0 auto;
+      line-height: 1.7;
+    }
+
+    /* ===== PRICING CARD ===== */
+    #pricing {
+      background: var(--gray-light);
+      padding: var(--section-pad) 0;
+    }
+
+    .pricing-card {
+      background: var(--white);
+      border-radius: 20px;
+      box-shadow: 0 4px 48px rgba(0,0,0,0.1);
+      max-width: 820px;
+      margin: 0 auto;
+      overflow: hidden;
+    }
+
+    .pricing-card-header {
+      background: var(--black);
+      padding: 36px 40px 32px;
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      flex-wrap: wrap;
+      gap: 20px;
+    }
+
+    .pricing-plan-name {
+      font-size: 0.78rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.15em;
+      color: #aaa;
+      margin-bottom: 8px;
+    }
+
+    .pricing-plan-title {
+      font-size: 1.5rem;
+      font-weight: 900;
+      color: var(--white);
+      letter-spacing: -0.02em;
+    }
+
+    .pricing-badge {
+      display: inline-block;
+      font-size: 0.72rem;
+      font-weight: 700;
+      background: rgba(53,81,255,0.25);
+      color: #93a8ff;
+      border: 1px solid rgba(53,81,255,0.4);
+      padding: 5px 12px;
+      border-radius: 20px;
+      margin-top: 12px;
+    }
+
+    .pricing-current {
+      text-align: right;
+    }
+
+    .pricing-per-label {
+      font-size: 0.8rem;
+      color: #888;
+      margin-bottom: 4px;
+    }
+
+    .pricing-price-wrap {
+      display: flex;
+      align-items: flex-end;
+      gap: 4px;
+      justify-content: flex-end;
+    }
+
+    .pricing-currency {
+      font-size: 1.4rem;
+      font-weight: 700;
+      color: var(--white);
+      padding-bottom: 6px;
+    }
+
+    .pricing-price {
+      font-size: 3.5rem;
+      font-weight: 900;
+      color: var(--white);
+      letter-spacing: -0.04em;
+      line-height: 1;
+      transition: all 0.3s ease;
+    }
+
+    .pricing-unit {
+      font-size: 0.85rem;
+      color: #888;
+      padding-bottom: 8px;
+    }
+
+    .pricing-success-note {
+      font-size: 0.78rem;
+      color: #666;
+      margin-top: 8px;
+    }
+
+    /* ===== SLIDER ===== */
+    .pricing-card-body { padding: 36px 40px; }
+
+    .slider-label-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 16px;
+    }
+
+    .slider-label {
+      font-size: 0.88rem;
+      font-weight: 700;
+      color: var(--black);
+    }
+
+    .slider-current-vol {
+      font-size: 0.88rem;
+      font-weight: 700;
+      color: var(--blue);
+    }
+
+    .slider-wrap { position: relative; margin-bottom: 10px; }
+
+    #vol-slider {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 100%;
+      height: 6px;
+      border-radius: 3px;
+      background: var(--gray-border);
+      outline: none;
+      cursor: pointer;
+    }
+
+    #vol-slider::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      width: 22px;
+      height: 22px;
+      border-radius: 50%;
+      background: var(--blue);
+      cursor: pointer;
+      box-shadow: 0 2px 8px rgba(53,81,255,0.4);
+      transition: transform 0.15s;
+    }
+
+    #vol-slider::-webkit-slider-thumb:hover { transform: scale(1.15); }
+    #vol-slider::-moz-range-thumb {
+      width: 22px; height: 22px;
+      border-radius: 50%;
+      background: var(--blue);
+      cursor: pointer;
+      border: none;
+      box-shadow: 0 2px 8px rgba(53,81,255,0.4);
+    }
+
+    .slider-ticks {
+      display: flex;
+      justify-content: space-between;
+      margin-top: 8px;
+    }
+
+    .slider-tick {
+      font-size: 0.72rem;
+      color: #bbb;
+      text-align: center;
+    }
+
+    .slider-tick.active { color: var(--blue); font-weight: 700; }
+
+    /* Savings bar */
+    .savings-banner {
+      background: var(--blue-dim);
+      border: 1px solid rgba(53,81,255,0.2);
+      border-radius: 10px;
+      padding: 14px 18px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin: 24px 0;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+
+    .savings-text { font-size: 0.88rem; color: #333; }
+    .savings-amount { font-size: 1rem; font-weight: 900; color: var(--blue); }
+
+    /* Features */
+    .features-grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 10px;
+      margin-top: 24px;
+    }
+
+    @media (min-width: 560px) { .features-grid { grid-template-columns: 1fr 1fr; } }
+
+    .feature-row {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      font-size: 0.88rem;
+      color: #333;
+    }
+
+    .feature-check {
+      flex-shrink: 0;
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      background: var(--blue);
+      color: var(--white);
+      font-size: 0.65rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-top: 1px;
+    }
+
+    .pricing-card-footer {
+      padding: 24px 40px 36px;
+      border-top: 1px solid var(--gray-border);
+      display: flex;
+      flex-wrap: wrap;
+      gap: 14px;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .pricing-card-footer .note {
+      font-size: 0.8rem;
+      color: #888;
+      max-width: 360px;
+      line-height: 1.6;
+    }
+
+    /* ===== VOLUME TIERS TABLE ===== */
+    #tiers {
+      background: var(--white);
+      padding: var(--section-pad) 0;
+    }
+
+    #tiers h2 {
+      font-size: clamp(1.6rem, 3.5vw, 2.4rem);
+      font-weight: 900;
+      letter-spacing: -0.02em;
+      margin-bottom: 48px;
+    }
+
+    .tiers-table {
+      width: 100%;
+      border-collapse: collapse;
+      border-radius: 12px;
+      overflow: hidden;
+      box-shadow: 0 2px 20px rgba(0,0,0,0.07);
+    }
+
+    .tiers-table thead tr {
+      background: var(--black);
+      color: var(--white);
+    }
+
+    .tiers-table th {
+      padding: 16px 20px;
+      font-size: 0.82rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      text-align: left;
+    }
+
+    .tiers-table td {
+      padding: 16px 20px;
+      font-size: 0.92rem;
+      border-bottom: 1px solid var(--gray-border);
+    }
+
+    .tiers-table tbody tr:last-child td { border-bottom: none; }
+
+    .tiers-table tbody tr:nth-child(even) { background: var(--gray-light); }
+
+    .tiers-table tbody tr.highlight-row {
+      background: var(--blue-dim);
+      border-left: 3px solid var(--blue);
+    }
+
+    .tiers-table tbody tr.highlight-row td:first-child { padding-left: 17px; }
+
+    .tier-price { font-weight: 900; font-size: 1rem; }
+
+    .tier-savings-tag {
+      display: inline-block;
+      font-size: 0.7rem;
+      font-weight: 700;
+      color: #16a34a;
+      background: #dcfce7;
+      padding: 2px 8px;
+      border-radius: 10px;
+      margin-left: 8px;
+    }
+
+    .tier-badge {
+      display: inline-block;
+      font-size: 0.7rem;
+      font-weight: 700;
+      color: var(--blue);
+      background: var(--blue-dim);
+      padding: 2px 8px;
+      border-radius: 10px;
+      margin-left: 8px;
+    }
+
+    /* ===== LOGOS ===== */
+    #logos {
+      background: var(--gray-light);
+      padding: 48px 0;
+      overflow: hidden;
+    }
+
+    .logos-label {
+      text-align: center;
+      font-size: 0.75rem;
+      font-weight: 700;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: #bbb;
+      margin-bottom: 32px;
+    }
+
+    .logo-track-wrapper {
+      overflow: hidden;
+      mask-image: linear-gradient(to right, transparent 0%, black 12%, black 88%, transparent 100%);
+      -webkit-mask-image: linear-gradient(to right, transparent 0%, black 12%, black 88%, transparent 100%);
+    }
+
+    .logo-track {
+      display: flex;
+      width: max-content;
+      animation: logoScroll 26s linear infinite;
+    }
+
+    .logo-track:hover { animation-play-state: paused; }
+
+    @keyframes logoScroll { from { transform: translateX(0); } to { transform: translateX(-50%); } }
+
+    .logo-item { display: flex; align-items: center; justify-content: center; padding: 0 48px; flex-shrink: 0; }
+    .logo-item span { font-size: 1.1rem; font-weight: 900; letter-spacing: -0.03em; color: #bbb; white-space: nowrap; user-select: none; transition: color 0.2s; }
+    .logo-item:hover span { color: #555; }
+
+    /* ===== FAQ ===== */
+    #faq {
+      background: var(--white);
+      padding: var(--section-pad) 0;
+    }
+
+    #faq h2 {
+      font-size: clamp(1.6rem, 3.5vw, 2.4rem);
+      font-weight: 900;
+      letter-spacing: -0.02em;
+      margin-bottom: 48px;
+    }
+
+    .faq-list { max-width: 800px; }
+
+    .faq-item { border-bottom: 1px solid var(--gray-border); }
+
+    .faq-question {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 22px 0;
+      cursor: pointer;
+      font-size: 1rem;
+      font-weight: 700;
+      gap: 16px;
+    }
+
+    .faq-icon {
+      flex-shrink: 0;
+      width: 28px; height: 28px;
+      border-radius: 50%;
+      border: 2px solid #ddd;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.1rem; color: #333; font-weight: 700;
+      transition: transform 0.3s, background 0.3s, border-color 0.3s;
+    }
+
+    .faq-item.open .faq-icon { transform: rotate(45deg); background: var(--black); color: var(--white); border-color: var(--black); }
+
+    .faq-answer { max-height: 0; overflow: hidden; transition: max-height 0.35s ease; }
+    .faq-item.open .faq-answer { max-height: 400px; }
+
+    .faq-answer-inner {
+      padding-bottom: 22px;
+      font-size: 0.95rem;
+      color: #444;
+      line-height: 1.8;
+    }
+
+    /* ===== BOTTOM CTA ===== */
+    #bottom-cta {
+      background: var(--black);
+      padding: var(--section-pad) 0;
+      text-align: center;
+      position: relative;
+      overflow: hidden;
+    }
+
+    #bottom-cta::before {
+      content: '';
+      position: absolute;
+      bottom: -100px; left: 50%; transform: translateX(-50%);
+      width: 600px; height: 300px;
+      background: radial-gradient(ellipse, rgba(53,81,255,0.15) 0%, transparent 70%);
+      pointer-events: none;
+    }
+
+    #bottom-cta h2 {
+      font-size: clamp(1.6rem, 3.5vw, 2.4rem);
+      font-weight: 900;
+      color: var(--white);
+      letter-spacing: -0.02em;
+      margin-bottom: 14px;
+      position: relative;
+    }
+
+    #bottom-cta p {
+      color: #aaa;
+      font-size: 1rem;
+      max-width: 520px;
+      margin: 0 auto 32px;
+      line-height: 1.7;
+      position: relative;
+    }
+
+    .cta-btn-group { display: flex; flex-wrap: wrap; gap: 14px; justify-content: center; position: relative; }
+
+    /* ===== FOOTER ===== */
+    footer { background: #0a0a0a; border-top: 1px solid #1a1a1a; padding: clamp(48px,6vw,80px) var(--pad-x) 0; }
+    .footer-grid { max-width: var(--container); margin: 0 auto; display: grid; grid-template-columns: 1fr 1fr; gap: 40px 24px; }
+    @media (min-width: 900px) { .footer-grid { grid-template-columns: 2fr 1fr 1fr 1fr 1fr; gap: 0 32px; } }
+    .footer-brand .logo { font-size: 1.3rem; font-weight: 900; color: var(--white); letter-spacing: -0.02em; display: inline-block; margin-bottom: 16px; }
+    .footer-brand .logo span { color: var(--blue); }
+    .footer-tagline { font-size: 0.88rem; font-weight: 700; color: #aaa; line-height: 1.6; max-width: 220px; }
+    .footer-col h3 { font-size: 0.82rem; font-weight: 700; color: var(--white); text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 20px; }
+    .footer-col ul { list-style: none; display: flex; flex-direction: column; gap: 12px; }
+    .footer-col ul li a { font-size: 0.88rem; color: #666; font-weight: 500; transition: color 0.2s; }
+    .footer-col ul li a:hover { color: var(--white); }
+    .footer-bottom { max-width: var(--container); margin: 48px auto 0; padding: 24px 0; border-top: 1px solid #1a1a1a; display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 12px; }
+    .footer-copy { font-size: 0.82rem; color: #555; font-weight: 500; }
+    .footer-bottom-links { display: flex; gap: 20px; }
+    .footer-bottom-links a { font-size: 0.82rem; color: #555; text-decoration: underline; text-underline-offset: 3px; transition: color 0.2s; }
+    .footer-bottom-links a:hover { color: var(--white); }
+  </style>
+</head>
+<body>
+
+<!-- ===== NAVBAR ===== -->
+<nav id="navbar">
+  <div class="container">
+    <div class="nav-inner">
+      <a href="index.html" class="logo">Review<span>Guards</span></a>
+      <ul class="nav-links">
+        <li><a href="index.html#how-it-works">So funktioniert es</a></li>
+        <li><a href="index.html#case-studies">Ergebnisse</a></li>
+        <li><a href="review-checker.html">Review Checker</a></li>
+        <li><a href="pricing.html" class="active" style="color:#fff;">Preise</a></li>
+        <li><a href="index.html#kontakt">Kontakt</a></li>
+      </ul>
+      <div class="nav-right">
+        <a href="index.html#kontakt" class="btn btn-blue nav-cta">Kostenlose Analyse</a>
+        <button class="hamburger" id="hamburger" aria-label="Menü öffnen">
+          <span></span><span></span><span></span>
+        </button>
+      </div>
+    </div>
+  </div>
+</nav>
+
+<div id="mobile-menu">
+  <a href="index.html" class="mobile-link">Startseite</a>
+  <a href="review-checker.html" class="mobile-link">Review Checker</a>
+  <a href="pricing.html" class="mobile-link">Preise</a>
+  <a href="index.html#kontakt" class="mobile-link">Kontakt</a>
+  <a href="index.html#kontakt" class="btn btn-blue mobile-link">Kostenlose Analyse</a>
+</div>
+
+
+<!-- ===== HERO ===== -->
+<section id="hero">
+  <div class="container">
+    <div class="hero-inner">
+      <span class="label" style="color:#aaa;">Preismodell</span>
+      <h1>Nur zahlen, wenn wir liefern.</h1>
+      <p class="hero-sub">Kein Abo, keine Vorauszahlung, keine versteckten Kosten. Du zahlst ausschließlich bei erfolgreich entfernten Bewertungen – und profitieren von Mengenrabatten.</p>
+    </div>
+  </div>
+</section>
+
+
+<!-- ===== PRICING CARD ===== -->
+<section id="pricing">
+  <div class="container">
+
+    <div class="pricing-card fade-up">
+      <div class="pricing-card-header">
+        <div>
+          <div class="pricing-plan-name">ReviewGuards</div>
+          <div class="pricing-plan-title">Erfolgsbasierter Plan</div>
+          <div class="pricing-badge">Keine Vorauszahlung · Nur bei Erfolg</div>
+        </div>
+        <div class="pricing-current">
+          <div class="pricing-per-label">Preis pro entfernter Bewertung</div>
+          <div class="pricing-price-wrap">
+            <span class="pricing-currency">€</span>
+            <span class="pricing-price" id="price-display">199</span>
+            <span class="pricing-unit">/ Bewertung</span>
+          </div>
+          <div class="pricing-success-note">zzgl. MwSt. · Nur bei Erfolg</div>
+        </div>
+      </div>
+
+      <div class="pricing-card-body">
+        <div class="slider-label-row">
+          <span class="slider-label">Wie viele Bewertungen möchtest du entfernen?</span>
+          <span class="slider-current-vol" id="vol-display">1–10 Bewertungen</span>
+        </div>
+
+        <div class="slider-wrap">
+          <input type="range" id="vol-slider" min="0" max="5" step="1" value="0">
+        </div>
+
+        <div class="slider-ticks">
+          <span class="slider-tick active" data-idx="0">1</span>
+          <span class="slider-tick" data-idx="1">10</span>
+          <span class="slider-tick" data-idx="2">50</span>
+          <span class="slider-tick" data-idx="3">125</span>
+          <span class="slider-tick" data-idx="4">300</span>
+          <span class="slider-tick" data-idx="5">500+</span>
+        </div>
+
+        <div class="savings-banner" id="savings-banner">
+          <span class="savings-text" id="savings-text">Standardpreis – ab 10 Bewertungen sparst du</span>
+          <span class="savings-amount" id="savings-amount">—</span>
+        </div>
+
+        <div class="features-grid">
+          <div class="feature-row"><div class="feature-check">✓</div><span>Analyse auf 15+ Marketplaces</span></div>
+          <div class="feature-row"><div class="feature-check">✓</div><span>Wöchentliches Monitoring neuer Bewertungen</span></div>
+          <div class="feature-row"><div class="feature-check">✓</div><span>Persönlicher Ansprechpartner</span></div>
+          <div class="feature-row"><div class="feature-check">✓</div><span>ASIN-Empfehlungsliste nach Ø-Gewichtung</span></div>
+          <div class="feature-row"><div class="feature-check">✓</div><span>Vollständige Dokumentation jedes Falls</span></div>
+          <div class="feature-row"><div class="feature-check">✓</div><span>Eskalation bis zur finalen Entscheidung</span></div>
+          <div class="feature-row"><div class="feature-check">✓</div><span>Ergebnisbericht mit Bewertungsschnitt-Entwicklung</span></div>
+          <div class="feature-row"><div class="feature-check">✓</div><span>Buybox-Analyse &amp; Unterdrückungs-Alerts</span></div>
+        </div>
+      </div>
+
+      <div class="pricing-card-footer">
+        <p class="note">Preise verstehen sich zzgl. der gesetzlich anfallenden Mehrwertsteuer. Mindestanzahl: 1 Bewertung. Keine Einrichtungsgebühr, keine Kündigung nötig.</p>
+        <a href="index.html#kontakt" class="btn btn-blue">Jetzt kostenlos starten →</a>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+
+<!-- ===== TIERS TABLE ===== -->
+<section id="tiers">
+  <div class="container">
+    <div class="fade-up">
+      <span class="label">Preisübersicht</span>
+      <h2>Mengenrabatte auf einen Blick.</h2>
+    </div>
+    <div class="fade-up" data-delay="1" style="overflow-x:auto;">
+      <table class="tiers-table">
+        <thead>
+          <tr>
+            <th>Anzahl entfernter Bewertungen</th>
+            <th>Preis pro Bewertung</th>
+            <th>Ersparnis vs. Standardpreis</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>1 – 10</td>
+            <td><span class="tier-price">€ 199</span></td>
+            <td>—</td>
+            <td></td>
+          </tr>
+          <tr>
+            <td>11 – 50</td>
+            <td><span class="tier-price">€ 189</span></td>
+            <td><span class="tier-savings-tag">– €10 / Bewertung</span></td>
+            <td></td>
+          </tr>
+          <tr>
+            <td>51 – 125</td>
+            <td><span class="tier-price">€ 179</span></td>
+            <td><span class="tier-savings-tag">– €20 / Bewertung</span></td>
+            <td></td>
+          </tr>
+          <tr class="highlight-row">
+            <td>126 – 300</td>
+            <td><span class="tier-price">€ 169</span></td>
+            <td><span class="tier-savings-tag">– €30 / Bewertung</span></td>
+            <td><span class="tier-badge">Beliebteste Stufe</span></td>
+          </tr>
+          <tr>
+            <td>301 – 500</td>
+            <td><span class="tier-price">€ 159</span></td>
+            <td><span class="tier-savings-tag">– €40 / Bewertung</span></td>
+            <td></td>
+          </tr>
+          <tr>
+            <td>501+</td>
+            <td><span class="tier-price">€ 149</span></td>
+            <td><span class="tier-savings-tag">– €50 / Bewertung</span></td>
+            <td><span class="tier-badge">Bester Preis</span></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+
+<!-- ===== LOGOS ===== -->
+<section id="logos">
+  <p class="logos-label">Vertrauen von Amazon-Verkäufern aus ganz Deutschland</p>
+  <div class="logo-track-wrapper">
+    <div class="logo-track">
+      <div class="logo-item"><span>NORDLICHT</span></div>
+      <div class="logo-item"><span>Bergmann &amp; Co.</span></div>
+      <div class="logo-item"><span>VITAWERK</span></div>
+      <div class="logo-item"><span>Müller Handels GmbH</span></div>
+      <div class="logo-item"><span>SPORTLINE</span></div>
+      <div class="logo-item"><span>Haushaltsprofi</span></div>
+      <div class="logo-item"><span>TECHFORMA</span></div>
+      <div class="logo-item"><span>Grünfeld &amp; Söhne</span></div>
+      <div class="logo-item"><span>BEAUTYHAUS</span></div>
+      <div class="logo-item"><span>Steiner Imports</span></div>
+      <div class="logo-item"><span>NORDLICHT</span></div>
+      <div class="logo-item"><span>Bergmann &amp; Co.</span></div>
+      <div class="logo-item"><span>VITAWERK</span></div>
+      <div class="logo-item"><span>Müller Handels GmbH</span></div>
+      <div class="logo-item"><span>SPORTLINE</span></div>
+      <div class="logo-item"><span>Haushaltsprofi</span></div>
+      <div class="logo-item"><span>TECHFORMA</span></div>
+      <div class="logo-item"><span>Grünfeld &amp; Söhne</span></div>
+      <div class="logo-item"><span>BEAUTYHAUS</span></div>
+      <div class="logo-item"><span>Steiner Imports</span></div>
+    </div>
+  </div>
+</section>
+
+
+<!-- ===== FAQ ===== -->
+<section id="faq">
+  <div class="container">
+    <div class="fade-up">
+      <span class="label">FAQ</span>
+      <h2>Deine Fragen, beantwortet.</h2>
+    </div>
+    <div class="faq-list">
+
+      <div class="faq-item fade-up">
+        <div class="faq-question">Warum sollte ich ReviewGuards wählen?<span class="faq-icon">+</span></div>
+        <div class="faq-answer"><div class="faq-answer-inner">ReviewGuards verbindet jahrelange Amazon-Expertise mit einem transparenten Erfolgsmodell: du zahlst nur, wenn wir tatsächlich liefern. Kein Risiko, kein Abo, kein versteckter Aufwand – du konzentrierst dich auf dein Business, wir übernehmen die Eskalation.</div></div>
+      </div>
+
+      <div class="faq-item fade-up" data-delay="1">
+        <div class="faq-question">Ist der Service mit den Amazon-Richtlinien konform?<span class="faq-icon">+</span></div>
+        <div class="faq-answer"><div class="faq-answer-inner">Ja, zu 100 %. Wir arbeiten ausschließlich mit den offiziellen Amazon-Eskalationswegen. Es werden nur Bewertungen angegangen, die nachweislich gegen Amazons Community-Richtlinien verstoßen. Keine Black-Hat-Methoden, kein Risiko für deinen Seller-Account.</div></div>
+      </div>
+
+      <div class="faq-item fade-up" data-delay="2">
+        <div class="faq-question">Benötigt ihr Zugang zu meinem Seller-Account?<span class="faq-icon">+</span></div>
+        <div class="faq-answer"><div class="faq-answer-inner">Nein. Wir benötigen keinen Zugang zu deinem Seller Central. Die Analyse erfolgt auf Basis öffentlich zugänglicher Bewertungsdaten. Für die Kommunikation mit Amazon reicht die Angabe des Produkt-Links oder der ASIN.</div></div>
+      </div>
+
+      <div class="faq-item fade-up" data-delay="3">
+        <div class="faq-question">Wie hoch ist die Erfolgsquote?<span class="faq-icon">+</span></div>
+        <div class="faq-answer"><div class="faq-answer-inner">Unsere nachgewiesene Erfolgsquote liegt bei 98 % für Bewertungen, die wir zur Bearbeitung annehmen. Wir nehmen einen Fall nur an, wenn nach der kostenlosen Erstanalyse eine realistische Erfolgschance besteht – damit schützen wir dich vor unnötigen Kosten.</div></div>
+      </div>
+
+      <div class="faq-item fade-up" data-delay="4">
+        <div class="faq-question">Wie lange dauert die Entfernung?<span class="faq-icon">+</span></div>
+        <div class="faq-answer"><div class="faq-answer-inner">Nach der kostenlosen Erstanalyse (48 Stunden) beginnen wir sofort mit der Einreichung. Einfache Fälle werden typischerweise in 5–7 Tagen gelöst, komplexere Fälle in bis zu 30 Tagen. Du erhältst regelmäßige Updates zum Status.</div></div>
+      </div>
+
+      <div class="faq-item fade-up">
+        <div class="faq-question">Was passiert, wenn eine Bewertung nicht entfernt wird?<span class="faq-icon">+</span></div>
+        <div class="faq-answer"><div class="faq-answer-inner">Bei nicht erfolgreicher Entfernung entstehen dir keinerlei Kosten. Unser Erfolgsmodell bedeutet: Wir tragen das Risiko, nicht du. Im Falle einer Ablehnung durch Amazon analysieren wir mit dir die nächsten Schritte.</div></div>
+      </div>
+
+      <div class="faq-item fade-up" data-delay="1">
+        <div class="faq-question">Für welche Amazon-Marketplaces funktioniert der Service?<span class="faq-icon">+</span></div>
+        <div class="faq-answer"><div class="faq-answer-inner">Wir unterstützen alle großen Marketplaces: amazon.de, amazon.com, amazon.co.uk, amazon.fr, amazon.es, amazon.it sowie weitere europäische und internationale Plattformen. Sprich uns auf deinen spezifischen Marketplace an.</div></div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+
+<!-- ===== BOTTOM CTA ===== -->
+<section id="bottom-cta">
+  <div class="container">
+    <div class="fade-up">
+      <span class="label" style="color:#aaa; display:block; margin-bottom:12px;">Jetzt starten</span>
+      <h2>Kostenlose Analyse – unverbindlich.</h2>
+      <p>Sende uns deinen Produkt-Link. Wir prüfen kostenlos, wie viele Bewertungen entfernbar sind und wie stark sich dein Ø-Rating verbessern kann.</p>
+      <div class="cta-btn-group">
+        <a href="index.html#kontakt" class="btn btn-blue">Jetzt kostenlose Analyse anfragen →</a>
+        <a href="review-checker.html" class="btn btn-outline-white">Review Checker ausprobieren</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+
+<!-- ===== FOOTER ===== -->
+<footer>
+  <div class="footer-grid">
+    <div class="footer-brand">
+      <a href="index.html" class="logo">Review<span>Guards</span></a>
+      <p class="footer-tagline">Negative Amazon-Bewertungen professionell entfernen – diskret, legal, erfolgsorientiert.</p>
+    </div>
+    <div class="footer-col">
+      <h3>Service</h3>
+      <ul>
+        <li><a href="index.html#how-it-works">So funktioniert es</a></li>
+        <li><a href="pricing.html">Preise</a></li>
+        <li><a href="review-checker.html">Review Checker</a></li>
+        <li><a href="index.html#case-studies">Ergebnisse</a></li>
+      </ul>
+    </div>
+    <div class="footer-col">
+      <h3>Unternehmen</h3>
+      <ul>
+        <li><a href="https://adsmasters.de" target="_blank" rel="noopener">AdsMasters GmbH</a></li>
+        <li><a href="index.html#kontakt">Kontakt</a></li>
+        <li><a href="index.html#faq">FAQ</a></li>
+        <li><a href="#">Impressum</a></li>
+      </ul>
+    </div>
+    <div class="footer-col">
+      <h3>Ressourcen</h3>
+      <ul>
+        <li><a href="review-checker.html">Kostenloser Checker</a></li>
+        <li><a href="index.html#faq">Häufige Fragen</a></li>
+        <li><a href="pricing.html">Preisübersicht</a></li>
+      </ul>
+    </div>
+    <div class="footer-col">
+      <h3>Social</h3>
+      <ul>
+        <li><a href="#" target="_blank" rel="noopener">LinkedIn</a></li>
+        <li><a href="#" target="_blank" rel="noopener">Instagram</a></li>
+        <li><a href="#" target="_blank" rel="noopener">Facebook</a></li>
+      </ul>
+    </div>
+  </div>
+  <div class="footer-bottom">
+    <p class="footer-copy">&copy; 2025 ReviewGuards &mdash; ein Service der AdsMasters GmbH. Alle Rechte vorbehalten.</p>
+    <div class="footer-bottom-links">
+      <a href="#">AGB</a>
+      <a href="#">Datenschutz</a>
+      <a href="#">Impressum</a>
+    </div>
+  </div>
+</footer>
+
+
+<script>
+  // ===== NAVBAR =====
+  const hamburger = document.getElementById('hamburger');
+  const mobileMenu = document.getElementById('mobile-menu');
+  hamburger.addEventListener('click', () => {
+    const open = !mobileMenu.classList.contains('open');
+    hamburger.classList.toggle('open', open);
+    mobileMenu.classList.toggle('open', open);
+    document.body.style.overflow = open ? 'hidden' : '';
+  });
+  document.querySelectorAll('.mobile-link').forEach(l => l.addEventListener('click', () => {
+    hamburger.classList.remove('open');
+    mobileMenu.classList.remove('open');
+    document.body.style.overflow = '';
+  }));
+  window.addEventListener('scroll', () => {
+    document.getElementById('navbar').classList.toggle('scrolled', window.scrollY > 80);
+  }, { passive: true });
+
+  // ===== SCROLL ANIMATIONS =====
+  const io = new IntersectionObserver(entries => {
+    entries.forEach(e => { if (e.isIntersecting) { e.target.classList.add('visible'); io.unobserve(e.target); } });
+  }, { threshold: 0.1 });
+  document.querySelectorAll('.fade-up').forEach(el => io.observe(el));
+
+  // ===== PRICING SLIDER =====
+  const tiers = [
+    { label: '1–10 Bewertungen',    price: 199, savings: null },
+    { label: '11–50 Bewertungen',   price: 189, savings: 10   },
+    { label: '51–125 Bewertungen',  price: 179, savings: 20   },
+    { label: '126–300 Bewertungen', price: 169, savings: 30   },
+    { label: '301–500 Bewertungen', price: 159, savings: 40   },
+    { label: '501+ Bewertungen',    price: 149, savings: 50   },
+  ];
+
+  const slider       = document.getElementById('vol-slider');
+  const priceDisplay = document.getElementById('price-display');
+  const volDisplay   = document.getElementById('vol-display');
+  const savingsText  = document.getElementById('savings-text');
+  const savingsAmt   = document.getElementById('savings-amount');
+  const ticks        = document.querySelectorAll('.slider-tick');
+
+  function updateSlider(idx) {
+    const tier = tiers[idx];
+
+    // Animate price
+    const current = parseInt(priceDisplay.textContent);
+    const target  = tier.price;
+    const dur = 300;
+    const start = performance.now();
+    function tick(now) {
+      const p = Math.min((now - start) / dur, 1);
+      priceDisplay.textContent = Math.round(current + (target - current) * p);
+      if (p < 1) requestAnimationFrame(tick);
+    }
+    requestAnimationFrame(tick);
+
+    volDisplay.textContent = tier.label;
+
+    if (tier.savings) {
+      savingsText.textContent = 'Du sparst gegenüber dem Standardpreis:';
+      savingsAmt.textContent  = '– €' + tier.savings + ' pro Bewertung';
+    } else {
+      savingsText.textContent = 'Ab 10 Bewertungen erhältst du automatisch Mengenrabatt.';
+      savingsAmt.textContent  = '↑ Schieberegler bewegen';
+    }
+
+    // Update slider track fill
+    const pct = (idx / (tiers.length - 1)) * 100;
+    slider.style.background = `linear-gradient(to right, #3551FF ${pct}%, #e0e0e0 ${pct}%)`;
+
+    // Update ticks
+    ticks.forEach((t, i) => t.classList.toggle('active', i === idx));
+  }
+
+  slider.addEventListener('input', () => updateSlider(parseInt(slider.value)));
+  updateSlider(0);
+
+  // ===== FAQ =====
+  document.querySelectorAll('.faq-question').forEach(q => {
+    q.addEventListener('click', () => {
+      const item   = q.closest('.faq-item');
+      const isOpen = item.classList.contains('open');
+      document.querySelectorAll('.faq-item.open').forEach(i => i.classList.remove('open'));
+      if (!isOpen) item.classList.add('open');
+    });
+  });
+</script>
+
+</body>
+</html>
