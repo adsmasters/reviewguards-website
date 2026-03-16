@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Entfernte Bewertungen – ReviewGuards</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: Arial, Helvetica, sans-serif; background: #f5f6ff; color: #111; display: flex; min-height: 100vh; }
+    .sidebar { width: 220px; min-height: 100vh; background: #0d1117; display: flex; flex-direction: column; position: fixed; top: 0; left: 0; bottom: 0; z-index: 100; }
+    .sidebar-top { padding: 24px 16px 16px; border-bottom: 1px solid rgba(255,255,255,0.07); }
+    .sb-logo { display: flex; align-items: center; gap: 10px; margin-bottom: 20px; }
+    .sb-logo-icon { width: 32px; height: 32px; background: #3551FF; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-weight: 900; font-size: 0.75rem; color: #fff; flex-shrink: 0; }
+    .sb-logo-text { font-weight: 900; font-size: 0.95rem; color: #fff; }
+    .sb-logo-text span { color: #3551FF; }
+    .company-box { display: flex; align-items: center; gap: 10px; padding: 8px 10px; background: rgba(255,255,255,0.05); border-radius: 10px; }
+    .company-avatar { width: 28px; height: 28px; background: #3551FF; border-radius: 6px; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 0.75rem; color: #fff; flex-shrink: 0; }
+    .company-name { font-size: 0.8rem; font-weight: 600; color: #fff; flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .sidebar-nav { flex: 1; padding: 12px 10px; }
+    .nav-item { display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-radius: 8px; color: rgba(255,255,255,0.6); font-size: 0.85rem; font-weight: 500; text-decoration: none; margin-bottom: 2px; transition: all 0.15s; }
+    .nav-item:hover { background: rgba(255,255,255,0.06); color: rgba(255,255,255,0.9); }
+    .nav-item.active { background: rgba(53,81,255,0.15); color: #fff; border-left: 2px solid #3551FF; padding-left: 10px; }
+    .sidebar-bottom { padding: 12px 10px; border-top: 1px solid rgba(255,255,255,0.07); }
+    .sb-ext-links { display: flex; gap: 16px; padding: 6px 12px; margin-bottom: 10px; }
+    .sb-ext-link { font-size: 0.78rem; color: rgba(255,255,255,0.4); text-decoration: none; }
+    .sb-ext-link:hover { color: rgba(255,255,255,0.7); }
+    .user-row { display: flex; align-items: center; gap: 10px; padding: 8px 12px; }
+    .user-avatar { width: 30px; height: 30px; background: #374151; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 0.75rem; color: #fff; flex-shrink: 0; }
+    .user-info-text { flex: 1; overflow: hidden; }
+    .user-name { font-size: 0.78rem; font-weight: 600; color: #fff; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .user-email { font-size: 0.7rem; color: rgba(255,255,255,0.4); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .logout-btn { background: none; border: none; cursor: pointer; color: rgba(255,255,255,0.3); padding: 4px; }
+    .logout-btn:hover { color: rgba(255,255,255,0.7); }
+    .main { margin-left: 220px; flex: 1; display: flex; flex-direction: column; min-height: 100vh; }
+    .topbanner { background: #0d1117; padding: 10px 32px; display: flex; align-items: center; gap: 12px; }
+    .banner-label { font-size: 0.75rem; font-weight: 700; color: rgba(255,255,255,0.5); text-transform: uppercase; letter-spacing: 0.08em; }
+    .banner-title { font-size: 0.85rem; color: rgba(255,255,255,0.8); }
+    .banner-btn { margin-left: auto; padding: 6px 16px; background: #3551FF; color: #fff; border: none; border-radius: 7px; font-size: 0.8rem; font-weight: 700; cursor: pointer; text-decoration: none; }
+    .content { padding: 32px; flex: 1; }
+    .page-header { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 24px; }
+    .page-title { font-size: 1.6rem; font-weight: 900; color: #111; letter-spacing: -0.02em; }
+    .page-sub { font-size: 0.83rem; color: #6b7280; margin-top: 4px; }
+    .filter-select { padding: 9px 12px; border: 1.5px solid #e5e7eb; border-radius: 9px; font-size: 0.83rem; color: #374151; background: #fff; outline: none; }
+    .tab-row { display: flex; border-bottom: 2px solid #e5e7eb; margin-bottom: 24px; }
+    .tab-btn { padding: 10px 16px; font-size: 0.85rem; font-weight: 600; color: #9ca3af; cursor: pointer; border-bottom: 2px solid transparent; margin-bottom: -2px; transition: all 0.15s; }
+    .tab-btn.active { color: #3551FF; border-bottom-color: #3551FF; }
+    .results-count { font-size: 0.82rem; color: #6b7280; margin-bottom: 16px; }
+    .stats-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-bottom: 28px; }
+    .stat-card { background: #fff; border: 1px solid #e5e7eb; border-radius: 12px; padding: 20px 24px; }
+    .stat-num { font-size: 2rem; font-weight: 900; color: #111; letter-spacing: -0.03em; }
+    .stat-label { font-size: 0.78rem; color: #6b7280; margin-top: 4px; }
+    .table-wrap { background: #fff; border-radius: 14px; border: 1px solid #e5e7eb; overflow: hidden; }
+    table { width: 100%; border-collapse: collapse; }
+    th { padding: 11px 20px; text-align: left; font-size: 0.73rem; font-weight: 700; color: #9ca3af; text-transform: uppercase; letter-spacing: 0.05em; border-bottom: 1px solid #f3f4f6; white-space: nowrap; }
+    td { padding: 14px 20px; border-bottom: 1px solid #f9fafb; font-size: 0.85rem; vertical-align: middle; }
+    tr:last-child td { border-bottom: none; }
+    tr:hover td { background: #f9fafb; }
+    .stars { color: #f59e0b; }
+    .badge-billed { padding: 4px 10px; background: #dcfce7; color: #16a34a; border-radius: 20px; font-size: 0.73rem; font-weight: 600; }
+    .badge-unbilled { padding: 4px 10px; background: #fef3c7; color: #d97706; border-radius: 20px; font-size: 0.73rem; font-weight: 600; }
+    .empty-state { text-align: center; padding: 80px 20px; }
+    .empty-icon { font-size: 3.5rem; margin-bottom: 16px; opacity: 0.25; }
+    .empty-title { font-size: 0.95rem; font-weight: 600; color: #6b7280; }
+    .empty-sub { font-size: 0.82rem; color: #9ca3af; margin-top: 6px; }
+  </style>
+</head>
+<body>
+<aside class="sidebar">
+  <div class="sidebar-top">
+    <div class="sb-logo">
+      <div class="sb-logo-icon">RG</div>
+      <div class="sb-logo-text">Review<span>Guards</span></div>
+    </div>
+    <div class="company-box">
+      <div class="company-avatar" id="company-initial">?</div>
+      <span class="company-name" id="company-name-display">Laden…</span>
+    </div>
+  </div>
+  <nav class="sidebar-nav">
+    <a href="dashboard.html" class="nav-item">
+      <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+      Dashboard
+    </a>
+    <a href="open-cases.html" class="nav-item">
+      <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>
+      Offene Fälle
+    </a>
+    <a href="removed-reviews.html" class="nav-item active">
+      <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+      Entfernte Bewertungen
+    </a>
+    <a href="invoices.html" class="nav-item">
+      <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"/></svg>
+      Rechnungen
+    </a>
+  </nav>
+  <div class="sidebar-bottom">
+    <div class="sb-ext-links">
+      <a href="../index.html" class="sb-ext-link">Homepage</a>
+      <a href="../pricing.html" class="sb-ext-link">Preise</a>
+    </div>
+    <div class="user-row">
+      <div class="user-avatar" id="user-initial">?</div>
+      <div class="user-info-text">
+        <div class="user-name" id="user-name">–</div>
+        <div class="user-email" id="user-email">–</div>
+      </div>
+      <button class="logout-btn" id="logout-btn">
+        <svg width="15" height="15" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/></svg>
+      </button>
+    </div>
+  </div>
+</aside>
+
+<div class="main">
+  <div class="topbanner">
+    <span class="banner-label">Neuer Auftrag</span>
+    <span class="banner-title">Bewertungen entfernen lassen</span>
+    <a href="dashboard.html" class="banner-btn">Jetzt starten →</a>
+  </div>
+  <div class="content">
+    <div class="page-header">
+      <div>
+        <div class="page-title">Entfernte Bewertungen</div>
+        <div class="page-sub">Übersicht aller erfolgreich entfernten Bewertungen</div>
+      </div>
+      <select class="filter-select" id="filter-select">
+        <option value="all">Alle Produkte</option>
+      </select>
+    </div>
+
+    <div class="stats-row">
+      <div class="stat-card">
+        <div class="stat-num" id="stat-total">0</div>
+        <div class="stat-label">Insgesamt entfernt</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-num" id="stat-month">0</div>
+        <div class="stat-label">Diesen Monat</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-num" id="stat-unbilled">0</div>
+        <div class="stat-label">Noch nicht abgerechnet</div>
+      </div>
+    </div>
+
+    <div class="tab-row">
+      <div class="tab-btn" data-tab="unbilled">Aktueller Monat (offen)</div>
+      <div class="tab-btn" data-tab="billed">Aktueller Monat (abgerechnet)</div>
+      <div class="tab-btn active" data-tab="all">Alle</div>
+    </div>
+
+    <div class="results-count" id="results-count">Laden…</div>
+
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Bewertung</th>
+            <th>Sterne</th>
+            <th>Produkt</th>
+            <th>Entfernt am</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody id="reviews-tbody">
+          <tr><td colspan="5"><div class="empty-state"><div class="empty-icon">📋</div><div class="empty-title">Laden…</div></div></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<script>
+  const { createClient } = window.supabase;
+  const sb = createClient('https://lgrnmiszhhahfcmctmwo.supabase.co', 'sb_publishable_E5tO2TvBrU8f1s5djnVOOQ_vk1djyAI');
+
+  let currentUser = null;
+  let allReviews = [];
+  let products = {};
+  let activeTab = 'all';
+
+  async function init() {
+    const { data: { session } } = await sb.auth.getSession();
+    if (!session) { location.href = 'login.html'; return; }
+    currentUser = session.user;
+
+    const { data: profile } = await sb.from('profiles').select('*').eq('user_id', currentUser.id).single();
+    const company = profile?.company_name || currentUser.email.split('@')[0];
+    document.getElementById('company-name-display').textContent = company;
+    document.getElementById('company-initial').textContent = company[0].toUpperCase();
+    document.getElementById('user-name').textContent = company;
+    document.getElementById('user-email').textContent = currentUser.email;
+    document.getElementById('user-initial').textContent = currentUser.email[0].toUpperCase();
+
+    await loadProducts();
+    await loadReviews();
+  }
+
+  async function loadProducts() {
+    const { data } = await sb.from('products').select('id,name,asin').eq('user_id', currentUser.id);
+    (data || []).forEach(p => products[p.id] = p);
+    const sel = document.getElementById('filter-select');
+    (data || []).forEach(p => {
+      const opt = document.createElement('option');
+      opt.value = p.id;
+      opt.textContent = p.name ? p.name.substring(0,40)+'…' : p.asin;
+      sel.appendChild(opt);
+    });
+    sel.addEventListener('change', renderReviews);
+  }
+
+  async function loadReviews() {
+    const { data } = await sb.from('removed_reviews').select('*').eq('user_id', currentUser.id).order('removed_at', { ascending: false });
+    allReviews = data || [];
+
+    const now = new Date();
+    const thisMonth = allReviews.filter(r => {
+      const d = new Date(r.removed_at);
+      return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
+    });
+    const unbilled = allReviews.filter(r => !r.billed);
+
+    document.getElementById('stat-total').textContent = allReviews.length;
+    document.getElementById('stat-month').textContent = thisMonth.length;
+    document.getElementById('stat-unbilled').textContent = unbilled.length;
+
+    renderReviews();
+  }
+
+  function renderReviews() {
+    const productFilter = document.getElementById('filter-select').value;
+    const now = new Date();
+
+    let filtered = allReviews.filter(r => {
+      const d = new Date(r.removed_at);
+      const isThisMonth = d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
+      const matchProduct = productFilter === 'all' || r.product_id === productFilter;
+      if (!matchProduct) return false;
+      if (activeTab === 'unbilled') return isThisMonth && !r.billed;
+      if (activeTab === 'billed') return isThisMonth && r.billed;
+      return true;
+    });
+
+    document.getElementById('results-count').textContent = filtered.length + ' Ergebnis' + (filtered.length !== 1 ? 'se' : '');
+    const tbody = document.getElementById('reviews-tbody');
+
+    if (filtered.length === 0) {
+      tbody.innerHTML = `<tr><td colspan="5"><div class="empty-state"><div class="empty-icon">📋</div><div class="empty-title">Keine Ergebnisse</div><div class="empty-sub">Hier erscheinen genehmigte Fälle nach der Bearbeitung</div></div></td></tr>`;
+      return;
+    }
+
+    tbody.innerHTML = filtered.map(r => {
+      const product = products[r.product_id];
+      const stars = '★'.repeat(r.review_rating || 0) + '☆'.repeat(5 - (r.review_rating || 0));
+      const date = new Date(r.removed_at).toLocaleDateString('de-DE');
+      return `
+        <tr>
+          <td style="max-width:300px;">
+            ${r.review_title ? `<div style="font-weight:600;margin-bottom:4px;">${r.review_title}</div>` : ''}
+            <div style="font-size:0.8rem;color:#6b7280;">${r.review_text ? r.review_text.substring(0,100)+'…' : 'Kein Text'}</div>
+          </td>
+          <td><span class="stars">${stars}</span></td>
+          <td style="font-size:0.8rem;color:#6b7280;">${product ? (product.name ? product.name.substring(0,35)+'…' : product.asin) : '–'}</td>
+          <td style="white-space:nowrap;color:#6b7280;">${date}</td>
+          <td>${r.billed ? '<span class="badge-billed">✓ Abgerechnet</span>' : '<span class="badge-unbilled">Ausstehend</span>'}</td>
+        </tr>`;
+    }).join('');
+  }
+
+  document.querySelectorAll('.tab-btn').forEach(btn => btn.addEventListener('click', () => {
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    activeTab = btn.dataset.tab;
+    renderReviews();
+  }));
+
+  document.getElementById('logout-btn').addEventListener('click', async () => {
+    await sb.auth.signOut(); location.href = 'login.html';
+  });
+
+  init();
+</script>
+</body>
+</html>

@@ -1,0 +1,568 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dashboard – ReviewGuards</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: Arial, Helvetica, sans-serif; background: #f5f6ff; color: #111; display: flex; min-height: 100vh; }
+
+    /* SIDEBAR */
+    .sidebar { width: 220px; min-height: 100vh; background: #0d1117; display: flex; flex-direction: column; position: fixed; top: 0; left: 0; bottom: 0; z-index: 100; }
+    .sidebar-top { padding: 24px 16px 16px; border-bottom: 1px solid rgba(255,255,255,0.07); }
+    .sb-logo { display: flex; align-items: center; gap: 10px; margin-bottom: 20px; }
+    .sb-logo-icon { width: 32px; height: 32px; background: #3551FF; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-weight: 900; font-size: 0.75rem; color: #fff; letter-spacing: -0.03em; flex-shrink: 0; }
+    .sb-logo-text { font-weight: 900; font-size: 0.95rem; color: #fff; letter-spacing: -0.01em; }
+    .sb-logo-text span { color: #3551FF; }
+    .company-box { display: flex; align-items: center; gap: 10px; padding: 8px 10px; background: rgba(255,255,255,0.05); border-radius: 10px; cursor: pointer; }
+    .company-avatar { width: 28px; height: 28px; background: #3551FF; border-radius: 6px; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 0.75rem; color: #fff; flex-shrink: 0; }
+    .company-name { font-size: 0.8rem; font-weight: 600; color: #fff; flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .sidebar-nav { flex: 1; padding: 12px 10px; }
+    .nav-item { display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-radius: 8px; color: rgba(255,255,255,0.6); font-size: 0.85rem; font-weight: 500; text-decoration: none; margin-bottom: 2px; transition: all 0.15s; }
+    .nav-item:hover { background: rgba(255,255,255,0.06); color: rgba(255,255,255,0.9); }
+    .nav-item.active { background: rgba(53,81,255,0.15); color: #fff; border-left: 2px solid #3551FF; padding-left: 10px; }
+    .nav-item svg { flex-shrink: 0; }
+    .sidebar-bottom { padding: 12px 10px; border-top: 1px solid rgba(255,255,255,0.07); }
+    .sb-ext-links { display: flex; gap: 16px; padding: 6px 12px; margin-bottom: 10px; }
+    .sb-ext-link { font-size: 0.78rem; color: rgba(255,255,255,0.4); text-decoration: none; transition: color 0.15s; }
+    .sb-ext-link:hover { color: rgba(255,255,255,0.7); }
+    .user-row { display: flex; align-items: center; gap: 10px; padding: 8px 12px; }
+    .user-avatar { width: 30px; height: 30px; background: #374151; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 0.75rem; color: #fff; flex-shrink: 0; }
+    .user-info-text { flex: 1; overflow: hidden; }
+    .user-name { font-size: 0.78rem; font-weight: 600; color: #fff; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .user-email { font-size: 0.7rem; color: rgba(255,255,255,0.4); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .logout-btn { background: none; border: none; cursor: pointer; color: rgba(255,255,255,0.3); padding: 4px; transition: color 0.15s; }
+    .logout-btn:hover { color: rgba(255,255,255,0.7); }
+
+    /* MAIN */
+    .main { margin-left: 220px; flex: 1; display: flex; flex-direction: column; min-height: 100vh; }
+    .topbanner { background: #0d1117; padding: 10px 32px; display: flex; align-items: center; gap: 12px; }
+    .banner-label { font-size: 0.75rem; font-weight: 700; color: rgba(255,255,255,0.5); text-transform: uppercase; letter-spacing: 0.08em; }
+    .banner-title { font-size: 0.85rem; color: rgba(255,255,255,0.8); }
+    .banner-btn { margin-left: auto; padding: 6px 16px; background: #3551FF; color: #fff; border: none; border-radius: 7px; font-size: 0.8rem; font-weight: 700; cursor: pointer; text-decoration: none; }
+    .content { padding: 32px; flex: 1; }
+    .page-header { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 24px; }
+    .page-title { font-size: 1.6rem; font-weight: 900; color: #111; letter-spacing: -0.02em; }
+    .page-sub { font-size: 0.83rem; color: #6b7280; margin-top: 4px; }
+    .header-actions { display: flex; gap: 10px; }
+    .btn { padding: 9px 18px; border-radius: 9px; font-size: 0.83rem; font-weight: 700; cursor: pointer; border: none; text-decoration: none; display: inline-flex; align-items: center; gap: 7px; transition: filter 0.15s; }
+    .btn:hover { filter: brightness(1.08); }
+    .btn-primary { background: #3551FF; color: #fff; }
+    .btn-outline { background: #fff; color: #374151; border: 1.5px solid #e5e7eb; }
+
+    /* INFO BAR */
+    .info-bar { background: #eff2ff; border: 1px solid #c7d2fe; border-radius: 10px; padding: 10px 16px; margin-bottom: 24px; display: flex; align-items: center; gap: 10px; font-size: 0.83rem; color: #3551FF; }
+
+    /* SEARCH + FILTER */
+    .toolbar { display: flex; align-items: center; gap: 12px; margin-bottom: 20px; flex-wrap: wrap; }
+    .search-wrap { position: relative; flex: 1; min-width: 200px; }
+    .search-wrap svg { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: #9ca3af; }
+    .search-input { width: 100%; padding: 9px 12px 9px 36px; border: 1.5px solid #e5e7eb; border-radius: 9px; font-size: 0.85rem; color: #111; outline: none; background: #fff; }
+    .search-input:focus { border-color: #3551FF; }
+    .filter-select { padding: 9px 12px; border: 1.5px solid #e5e7eb; border-radius: 9px; font-size: 0.83rem; color: #374151; background: #fff; outline: none; cursor: pointer; }
+
+    /* TABS */
+    .tab-row { display: flex; gap: 0; border-bottom: 2px solid #e5e7eb; margin-bottom: 20px; }
+    .tab-btn { padding: 10px 16px; font-size: 0.85rem; font-weight: 600; color: #9ca3af; cursor: pointer; border-bottom: 2px solid transparent; margin-bottom: -2px; transition: all 0.15s; }
+    .tab-btn.active { color: #3551FF; border-bottom-color: #3551FF; }
+
+    /* TABLE */
+    .table-wrap { background: #fff; border-radius: 14px; border: 1px solid #e5e7eb; overflow: hidden; }
+    .results-count { font-size: 0.8rem; color: #6b7280; padding: 12px 20px; border-bottom: 1px solid #f3f4f6; }
+    table { width: 100%; border-collapse: collapse; }
+    th { padding: 11px 16px; text-align: left; font-size: 0.75rem; font-weight: 700; color: #9ca3af; text-transform: uppercase; letter-spacing: 0.05em; border-bottom: 1px solid #f3f4f6; white-space: nowrap; }
+    td { padding: 14px 16px; border-bottom: 1px solid #f9fafb; font-size: 0.85rem; vertical-align: middle; }
+    tr:last-child td { border-bottom: none; }
+    tr:hover td { background: #f9fafb; }
+    .product-cell { display: flex; align-items: center; gap: 12px; }
+    .product-img { width: 48px; height: 48px; border-radius: 8px; object-fit: contain; background: #f3f4f6; border: 1px solid #e5e7eb; flex-shrink: 0; }
+    .product-img-placeholder { width: 48px; height: 48px; border-radius: 8px; background: #f3f4f6; border: 1px solid #e5e7eb; display: flex; align-items: center; justify-content: center; font-size: 1.2rem; flex-shrink: 0; }
+    .product-name { font-weight: 600; color: #111; font-size: 0.85rem; line-height: 1.3; max-width: 280px; }
+    .product-asin { font-size: 0.73rem; color: #9ca3af; margin-top: 2px; font-family: monospace; }
+    .stars { color: #f59e0b; letter-spacing: 1px; }
+    .stars .empty { color: #e5e7eb; }
+    .neg-badge { display: inline-flex; align-items: center; gap: 4px; font-size: 0.82rem; color: #6b7280; }
+    .status-inactive { padding: 4px 10px; background: #f3f4f6; color: #6b7280; border-radius: 20px; font-size: 0.75rem; font-weight: 600; }
+    .status-active { padding: 4px 10px; background: #dcfce7; color: #16a34a; border-radius: 20px; font-size: 0.75rem; font-weight: 600; }
+    .btn-activate { padding: 6px 14px; background: #3551FF; color: #fff; border: none; border-radius: 7px; font-size: 0.78rem; font-weight: 700; cursor: pointer; transition: filter 0.15s; white-space: nowrap; }
+    .btn-activate:hover { filter: brightness(1.1); }
+    .btn-deactivate { padding: 6px 14px; background: #f3f4f6; color: #6b7280; border: none; border-radius: 7px; font-size: 0.78rem; font-weight: 700; cursor: pointer; }
+    .action-cell { display: flex; align-items: center; gap: 8px; }
+    .icon-btn { width: 28px; height: 28px; background: none; border: 1px solid #e5e7eb; border-radius: 6px; cursor: pointer; display: flex; align-items: center; justify-content: center; color: #9ca3af; transition: all 0.15s; }
+    .icon-btn:hover { border-color: #dc2626; color: #dc2626; background: #fee2e2; }
+
+    /* EMPTY STATE */
+    .empty-state { text-align: center; padding: 60px 20px; }
+    .empty-icon { font-size: 3rem; margin-bottom: 12px; opacity: 0.3; }
+    .empty-title { font-size: 0.95rem; font-weight: 600; color: #6b7280; margin-bottom: 6px; }
+    .empty-sub { font-size: 0.82rem; color: #9ca3af; }
+
+    /* MODAL */
+    .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.45); z-index: 200; display: none; align-items: center; justify-content: center; }
+    .modal-overlay.open { display: flex; }
+    .modal { background: #fff; border-radius: 16px; padding: 32px; width: 100%; max-width: 480px; box-shadow: 0 20px 60px rgba(0,0,0,0.2); }
+    .modal-title { font-size: 1.2rem; font-weight: 800; color: #111; margin-bottom: 6px; }
+    .modal-sub { font-size: 0.83rem; color: #6b7280; margin-bottom: 24px; }
+    .form-group { margin-bottom: 18px; }
+    .form-label { display: block; font-size: 0.82rem; font-weight: 700; color: #374151; margin-bottom: 6px; }
+    .form-input { width: 100%; padding: 11px 14px; border: 1.5px solid #e5e7eb; border-radius: 10px; font-size: 0.92rem; color: #111; outline: none; transition: border-color 0.2s; }
+    .form-input:focus { border-color: #3551FF; }
+    .modal-actions { display: flex; gap: 10px; margin-top: 24px; }
+    .btn-cancel { flex: 1; padding: 11px; background: #f3f4f6; color: #374151; border: none; border-radius: 9px; font-size: 0.88rem; font-weight: 700; cursor: pointer; }
+    .btn-confirm { flex: 2; padding: 11px; background: #3551FF; color: #fff; border: none; border-radius: 9px; font-size: 0.88rem; font-weight: 700; cursor: pointer; }
+    .btn-confirm:disabled { opacity: 0.6; cursor: not-allowed; }
+    .modal-msg { padding: 10px 14px; border-radius: 8px; font-size: 0.82rem; margin-bottom: 14px; display: none; }
+    .modal-msg.error { background: #fee2e2; color: #dc2626; }
+    .modal-msg.success { background: #dcfce7; color: #16a34a; }
+
+    /* TOOLTIP */
+    .tooltip-wrap { position: relative; display: inline-block; }
+    .tooltip { position: absolute; right: 0; top: 36px; background: #111; color: #fff; font-size: 0.75rem; padding: 8px 12px; border-radius: 8px; width: 220px; line-height: 1.4; z-index: 50; display: none; }
+    .tooltip strong { color: #f59e0b; }
+    .tooltip-wrap:hover .tooltip { display: block; }
+
+    /* TOAST */
+    .toast { position: fixed; bottom: 24px; right: 24px; background: #111; color: #fff; padding: 12px 20px; border-radius: 10px; font-size: 0.85rem; font-weight: 600; z-index: 300; transform: translateY(80px); opacity: 0; transition: all 0.3s; }
+    .toast.show { transform: translateY(0); opacity: 1; }
+    .toast.success { background: #16a34a; }
+    .toast.error { background: #dc2626; }
+  </style>
+</head>
+<body>
+
+<!-- SIDEBAR -->
+<aside class="sidebar">
+  <div class="sidebar-top">
+    <div class="sb-logo">
+      <div class="sb-logo-icon">RG</div>
+      <div class="sb-logo-text">Review<span>Guards</span></div>
+    </div>
+    <div class="company-box">
+      <div class="company-avatar" id="company-initial">?</div>
+      <span class="company-name" id="company-name-display">Laden…</span>
+    </div>
+  </div>
+  <nav class="sidebar-nav">
+    <a href="dashboard.html" class="nav-item active">
+      <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+      Dashboard
+    </a>
+    <a href="open-cases.html" class="nav-item">
+      <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>
+      Offene Fälle
+      <span id="cases-badge" style="margin-left:auto;background:#dc2626;color:#fff;font-size:0.68rem;font-weight:700;padding:1px 6px;border-radius:10px;display:none;"></span>
+    </a>
+    <a href="removed-reviews.html" class="nav-item">
+      <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+      Entfernte Bewertungen
+    </a>
+    <a href="invoices.html" class="nav-item">
+      <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"/></svg>
+      Rechnungen
+    </a>
+  </nav>
+  <div class="sidebar-bottom">
+    <div class="sb-ext-links">
+      <a href="../index.html" class="sb-ext-link">Homepage</a>
+      <a href="../pricing.html" class="sb-ext-link">Preise</a>
+    </div>
+    <div class="user-row">
+      <div class="user-avatar" id="user-initial">?</div>
+      <div class="user-info-text">
+        <div class="user-name" id="user-name">–</div>
+        <div class="user-email" id="user-email">–</div>
+      </div>
+      <button class="logout-btn" id="logout-btn" title="Abmelden">
+        <svg width="15" height="15" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/></svg>
+      </button>
+    </div>
+  </div>
+</aside>
+
+<!-- MAIN -->
+<div class="main">
+  <div class="topbanner">
+    <span class="banner-label">Neuer Auftrag</span>
+    <span class="banner-title">Bewertungen entfernen lassen</span>
+    <a href="#" class="banner-btn" id="banner-start-btn">Jetzt starten →</a>
+  </div>
+  <div class="content">
+    <div class="page-header">
+      <div>
+        <div class="page-title">Deine Produkte</div>
+        <div class="page-sub">Produkte hinzufügen und Bewertungsmonitoring aktivieren</div>
+      </div>
+      <div class="header-actions">
+        <button class="btn btn-outline" id="check-storefront-btn">
+          <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+          Storefront prüfen
+        </button>
+        <button class="btn btn-primary" id="add-product-btn">
+          <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M12 4v16m8-8H4"/></svg>
+          Produkt hinzufügen
+        </button>
+      </div>
+    </div>
+
+    <div class="info-bar">
+      <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg>
+      Für jedes aktivierte Produkt prüfen wir alle Bewertungen auf Richtlinienverstöße.
+    </div>
+
+    <div class="toolbar">
+      <div class="search-wrap">
+        <svg width="15" height="15" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
+        <input class="search-input" id="search-input" type="text" placeholder="ASIN oder Produktname suchen…">
+      </div>
+      <select class="filter-select" id="sort-select">
+        <option value="negative">Sortierung: Negative Bewertungen</option>
+        <option value="rating">Sortierung: Bewertung</option>
+        <option value="name">Sortierung: Name</option>
+      </select>
+      <select class="filter-select" id="status-filter">
+        <option value="all">Status: Alle</option>
+        <option value="active">Nur Aktive</option>
+        <option value="inactive">Nur Inaktive</option>
+      </select>
+    </div>
+
+    <div class="tab-row">
+      <div class="tab-btn active" data-filter="all">Alle</div>
+      <div class="tab-btn" data-filter="inactive">Inaktiv</div>
+      <div class="tab-btn" data-filter="active">Aktiv</div>
+    </div>
+
+    <div class="table-wrap">
+      <div class="results-count" id="results-count">Laden…</div>
+      <table>
+        <thead>
+          <tr>
+            <th>Produkt</th>
+            <th>Ø Bewertung</th>
+            <th>Negative</th>
+            <th>Bewertung</th>
+            <th>Status</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody id="products-tbody">
+          <tr><td colspan="6"><div class="empty-state"><div class="empty-icon">📦</div><div class="empty-title">Laden…</div></div></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- ADD PRODUCT MODAL -->
+<div class="modal-overlay" id="add-modal">
+  <div class="modal">
+    <div class="modal-title">Produkt hinzufügen</div>
+    <div class="modal-sub">ASIN eingeben – wir laden die Produktdaten automatisch.</div>
+    <div id="modal-msg" class="modal-msg"></div>
+    <div class="form-group">
+      <label class="form-label">Amazon ASIN</label>
+      <input type="text" class="form-input" id="asin-input" placeholder="z.B. B0CCB92L7D" maxlength="10">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Marketplace</label>
+      <select class="form-input" id="country-select">
+        <option value="DE">Amazon.de (Deutschland)</option>
+        <option value="GB">Amazon.co.uk (UK)</option>
+        <option value="FR">Amazon.fr (Frankreich)</option>
+        <option value="IT">Amazon.it (Italien)</option>
+        <option value="ES">Amazon.es (Spanien)</option>
+        <option value="US">Amazon.com (USA)</option>
+      </select>
+    </div>
+    <div class="modal-actions">
+      <button class="btn-cancel" id="modal-cancel">Abbrechen</button>
+      <button class="btn-confirm" id="modal-confirm">Produkt laden & hinzufügen</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<script>
+  const { createClient } = window.supabase;
+  const sb = createClient('https://lgrnmiszhhahfcmctmwo.supabase.co', 'sb_publishable_E5tO2TvBrU8f1s5djnVOOQ_vk1djyAI');
+  const RAPID_KEY  = 'f8efc09e81msh6c57af2fcb726adp116390jsne4a9ac230e46';
+  const RAPID_HOST = 'real-time-amazon-data.p.rapidapi.com';
+
+  let currentUser = null;
+  let allProducts = [];
+  let activeFilter = 'all';
+
+  // AUTH
+  async function init() {
+    const { data: { session } } = await sb.auth.getSession();
+    if (!session) { location.href = 'login.html'; return; }
+    currentUser = session.user;
+
+    const { data: profile } = await sb.from('profiles').select('*').eq('user_id', currentUser.id).single();
+    if (profile && !profile.onboarding_complete) { location.href = 'onboarding.html'; return; }
+    const company = profile?.company_name || currentUser.email.split('@')[0];
+    document.getElementById('company-name-display').textContent = company;
+    document.getElementById('company-initial').textContent = company[0].toUpperCase();
+    document.getElementById('user-name').textContent = company;
+    document.getElementById('user-email').textContent = currentUser.email;
+    document.getElementById('user-initial').textContent = currentUser.email[0].toUpperCase();
+
+    loadProducts();
+    loadCasesBadge();
+  }
+
+  async function loadCasesBadge() {
+    const { count } = await sb.from('cases').select('*', { count: 'exact', head: true }).eq('user_id', currentUser.id).eq('status', 'pending');
+    const badge = document.getElementById('cases-badge');
+    if (count > 0) { badge.textContent = count; badge.style.display = 'inline-block'; }
+  }
+
+  async function loadProducts() {
+    const { data, error } = await sb.from('products').select('*').eq('user_id', currentUser.id).order('created_at', { ascending: false });
+    if (error) { showToast('Fehler beim Laden', 'error'); return; }
+    allProducts = data || [];
+    renderProducts();
+  }
+
+  function renderProducts() {
+    const search = document.getElementById('search-input').value.toLowerCase();
+    const statusFilter = document.getElementById('status-filter').value;
+    const sort = document.getElementById('sort-select').value;
+
+    let filtered = allProducts.filter(p => {
+      const matchSearch = !search || p.name?.toLowerCase().includes(search) || p.asin?.toLowerCase().includes(search);
+      const matchStatus = activeFilter === 'all' || p.status === activeFilter;
+      const matchStatusFilter = statusFilter === 'all' || p.status === statusFilter;
+      return matchSearch && matchStatus && matchStatusFilter;
+    });
+
+    filtered.sort((a, b) => {
+      if (sort === 'negative') return (b.negative_reviews || 0) - (a.negative_reviews || 0);
+      if (sort === 'rating') return (a.rating || 0) - (b.rating || 0);
+      if (sort === 'name') return (a.name || '').localeCompare(b.name || '');
+      return 0;
+    });
+
+    document.getElementById('results-count').textContent = filtered.length + ' Ergebnis' + (filtered.length !== 1 ? 'se' : '');
+    const tbody = document.getElementById('products-tbody');
+
+    if (filtered.length === 0) {
+      tbody.innerHTML = `<tr><td colspan="6"><div class="empty-state"><div class="empty-icon">📦</div><div class="empty-title">Keine Produkte gefunden</div><div class="empty-sub">Füge dein erstes Produkt hinzu</div></div></td></tr>`;
+      return;
+    }
+
+    tbody.innerHTML = filtered.map(p => {
+      const stars = renderStars(p.rating || 0);
+      const isActive = p.status === 'active';
+      return `
+        <tr>
+          <td>
+            <div class="product-cell">
+              ${p.image_url ? `<img src="${p.image_url}" class="product-img" alt="">` : `<div class="product-img-placeholder">📦</div>`}
+              <div>
+                <div class="product-name">${p.name ? (p.name.length > 55 ? p.name.substring(0,55)+'…' : p.name) : p.asin}</div>
+                <div class="product-asin">ASIN: ${p.asin}</div>
+              </div>
+            </div>
+          </td>
+          <td><span style="font-weight:700;color:#111;">${p.rating ? p.rating.toFixed(2) : '–'}</span></td>
+          <td><span class="neg-badge"><svg width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>${p.negative_reviews || 0}</span></td>
+          <td><span class="stars">${stars}</span></td>
+          <td>${isActive ? '<span class="status-active">✓ Aktiv</span>' : '<span class="status-inactive">Inaktiv</span>'}</td>
+          <td>
+            <div class="action-cell">
+              ${isActive
+                ? `<button class="btn-deactivate" onclick="toggleStatus('${p.id}','inactive')">Deaktivieren</button>`
+                : `<button class="btn-activate" onclick="activateProduct('${p.id}','${p.asin}')">Aktivieren</button>`}
+              <button class="icon-btn" onclick="deleteProduct('${p.id}')" title="Löschen">
+                <svg width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+              </button>
+            </div>
+          </td>
+        </tr>`;
+    }).join('');
+  }
+
+  function renderStars(rating) {
+    const full = Math.round(rating);
+    let html = '';
+    for (let i = 1; i <= 5; i++) html += `<span${i > full ? ' class="empty"' : ''}>★</span>`;
+    return html;
+  }
+
+  // ACTIVATE PRODUCT - fetch reviews and create cases
+  async function activateProduct(id, asin) {
+    await toggleStatus(id, 'active');
+    showToast('Aktiviert – analysiere Bewertungen…');
+    try {
+      let reviews = [];
+      for (let page = 1; page <= 5; page++) {
+        const res = await fetch(
+          `https://${RAPID_HOST}/product-reviews?asin=${asin}&country=DE&page=${page}&sort_by=TOP_REVIEWS&star_rating=ALL&verified_purchases_only=false`,
+          { headers: { 'x-rapidapi-key': RAPID_KEY, 'x-rapidapi-host': RAPID_HOST } }
+        );
+        if (!res.ok) break;
+        const json = await res.json();
+        const pageReviews = json.data?.reviews || [];
+        reviews = reviews.concat(pageReviews);
+        if (pageReviews.length === 0) break;
+      }
+      const flagged = analyzeReviews(reviews);
+
+      if (flagged.length > 0) {
+        const { data: product } = await sb.from('products').select('id').eq('id', id).single();
+        const cases = flagged.map(r => ({
+          user_id: currentUser.id,
+          product_id: id,
+          review_title: r.review_title || '',
+          review_text: r.review_comment || '',
+          review_author: r.review_author_name || '',
+          review_rating: parseInt(r.review_star_rating) || 0,
+          reasons: r.reasons,
+          status: 'pending'
+        }));
+        await sb.from('cases').insert(cases);
+        showToast(`${flagged.length} verdächtige Bewertungen gefunden → Offene Fälle`, 'success');
+        loadCasesBadge();
+      } else {
+        showToast('Keine verdächtigen Bewertungen gefunden', 'success');
+      }
+    } catch(e) {
+      console.error(e);
+    }
+  }
+
+  function analyzeReviews(reviews) {
+    const flagged = [];
+    const attackWords = ['schlecht','katastrophe','betrug','fake','müll','schrott','nie wieder','horrible','terrible','scam','fraud'];
+    reviews.forEach(r => {
+      const reasons = [];
+      const stars = parseInt(r.review_star_rating) || 0;
+      const text = (r.review_comment || '').trim();
+      const title = (r.review_title || '').trim();
+      const verified = r.verified_purchase;
+      if (!verified && stars <= 2) reasons.push('Nicht verifizierter Kauf mit negativer Bewertung');
+      if (text.length < 25 && stars <= 2) reasons.push('Sehr kurzer Bewertungstext');
+      if (!text && title) reasons.push('Kein Bewertungstext vorhanden');
+      const combined = (text + ' ' + title).toLowerCase();
+      if (stars <= 2 && attackWords.some(w => combined.includes(w))) reasons.push('Enthält typische Angriffsbegriffe');
+      if (!verified && stars === 1 && reasons.length === 0) reasons.push('1-Stern ohne Kaufnachweis');
+      if (reasons.length > 0) flagged.push({ ...r, reasons });
+    });
+    return flagged;
+  }
+
+  async function toggleStatus(id, newStatus) {
+    await sb.from('products').update({ status: newStatus }).eq('id', id);
+    await loadProducts();
+  }
+
+  async function deleteProduct(id) {
+    if (!confirm('Produkt wirklich löschen?')) return;
+    await sb.from('cases').delete().eq('product_id', id);
+    await sb.from('removed_reviews').delete().eq('product_id', id);
+    await sb.from('products').delete().eq('id', id);
+    showToast('Produkt gelöscht');
+    loadProducts();
+  }
+
+  // ADD PRODUCT
+  document.getElementById('add-product-btn').addEventListener('click', () => {
+    document.getElementById('add-modal').classList.add('open');
+    document.getElementById('asin-input').focus();
+  });
+  document.getElementById('banner-start-btn').addEventListener('click', (e) => {
+    e.preventDefault();
+    document.getElementById('add-modal').classList.add('open');
+  });
+  document.getElementById('modal-cancel').addEventListener('click', () => closeModal());
+
+  document.getElementById('add-modal').addEventListener('click', e => {
+    if (e.target === document.getElementById('add-modal')) closeModal();
+  });
+
+  function closeModal() {
+    document.getElementById('add-modal').classList.remove('open');
+    document.getElementById('asin-input').value = '';
+    document.getElementById('modal-msg').style.display = 'none';
+    document.getElementById('modal-confirm').disabled = false;
+    document.getElementById('modal-confirm').textContent = 'Produkt laden & hinzufügen';
+  }
+
+  function showModalMsg(text, type) {
+    const el = document.getElementById('modal-msg');
+    el.textContent = text; el.className = 'modal-msg ' + type; el.style.display = 'block';
+  }
+
+  document.getElementById('modal-confirm').addEventListener('click', async () => {
+    const rawAsin = document.getElementById('asin-input').value.trim().toUpperCase();
+    const country = document.getElementById('country-select').value;
+    if (!rawAsin) { showModalMsg('Bitte ASIN eingeben', 'error'); return; }
+    const asin = rawAsin.match(/([A-Z0-9]{10})/)?.[1];
+    if (!asin) { showModalMsg('Ungültige ASIN – muss 10 Zeichen haben (z.B. B0CCB92L7D)', 'error'); return; }
+
+    const btn = document.getElementById('modal-confirm');
+    btn.disabled = true; btn.textContent = 'Lade Produktdaten…';
+
+    try {
+      const res = await fetch(
+        `https://${RAPID_HOST}/product-details?asin=${asin}&country=${country}`,
+        { headers: { 'x-rapidapi-key': RAPID_KEY, 'x-rapidapi-host': RAPID_HOST } }
+      );
+      const json = await res.json();
+      if (!res.ok || json.status !== 'OK') throw new Error(json.message || 'API Fehler');
+      const p = json.data || {};
+      const totalReviews = parseInt(String(p.product_num_ratings || '0').replace(/[.,]/g,'')) || 0;
+      const rating = parseFloat(p.product_star_rating) || 0;
+
+      const { error } = await sb.from('products').insert({
+        user_id: currentUser.id,
+        asin,
+        name: p.product_title || asin,
+        image_url: p.product_photo || null,
+        rating,
+        total_reviews: totalReviews,
+        negative_reviews: 0,
+        status: 'inactive'
+      });
+
+      if (error) throw new Error(error.message);
+      closeModal();
+      showToast('Produkt erfolgreich hinzugefügt!', 'success');
+      loadProducts();
+    } catch(e) {
+      showModalMsg('Fehler: ' + e.message, 'error');
+      btn.disabled = false; btn.textContent = 'Produkt laden & hinzufügen';
+    }
+  });
+
+  // FILTERS
+  document.querySelectorAll('.tab-btn').forEach(btn => btn.addEventListener('click', () => {
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    activeFilter = btn.dataset.filter;
+    renderProducts();
+  }));
+  document.getElementById('search-input').addEventListener('input', renderProducts);
+  document.getElementById('sort-select').addEventListener('change', renderProducts);
+  document.getElementById('status-filter').addEventListener('change', renderProducts);
+
+  // LOGOUT
+  document.getElementById('logout-btn').addEventListener('click', async () => {
+    await sb.auth.signOut(); location.href = 'login.html';
+  });
+
+  // TOAST
+  function showToast(msg, type = '') {
+    const t = document.getElementById('toast');
+    t.textContent = msg; t.className = 'toast ' + type + ' show';
+    setTimeout(() => t.classList.remove('show'), 3000);
+  }
+
+  init();
+</script>
+</body>
+</html>

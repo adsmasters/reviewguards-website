@@ -1,0 +1,348 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Einrichtung – ReviewGuards</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: Arial, Helvetica, sans-serif; background: #f5f6ff; min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 24px; }
+    .logo { margin-bottom: 32px; text-align: center; }
+    .logo-text { font-size: 1.5rem; font-weight: 900; color: #111; letter-spacing: -0.02em; }
+    .logo-text span { color: #3551FF; }
+
+    /* Progress bar */
+    .progress-wrap { width: 100%; max-width: 520px; margin-bottom: 24px; }
+    .progress-bar { height: 4px; background: #e5e7eb; border-radius: 2px; overflow: hidden; }
+    .progress-fill { height: 100%; background: #3551FF; border-radius: 2px; transition: width 0.4s ease; }
+    .progress-label { font-size: 0.75rem; color: #9ca3af; margin-top: 6px; text-align: right; }
+
+    .card { background: #fff; border-radius: 20px; padding: 40px; width: 100%; max-width: 520px; box-shadow: 0 4px 32px rgba(53,81,255,0.1); }
+    .step { display: none; }
+    .step.active { display: block; }
+
+    .step-title { font-size: 1.4rem; font-weight: 900; color: #111; margin-bottom: 6px; letter-spacing: -0.02em; }
+    .step-sub { font-size: 0.85rem; color: #6b7280; margin-bottom: 28px; line-height: 1.5; }
+
+    .form-group { margin-bottom: 18px; }
+    .form-label { display: block; font-size: 0.82rem; font-weight: 700; color: #374151; margin-bottom: 6px; }
+    .form-label .optional { font-weight: 400; color: #9ca3af; margin-left: 4px; }
+    .form-input { width: 100%; padding: 11px 14px; border: 1.5px solid #e5e7eb; border-radius: 10px; font-size: 0.92rem; color: #111; outline: none; transition: border-color 0.2s; background: #fff; }
+    .form-input:focus { border-color: #3551FF; }
+    select.form-input { cursor: pointer; }
+    .form-hint { font-size: 0.75rem; color: #9ca3af; margin-top: 5px; }
+    .form-hint a { color: #3551FF; text-decoration: none; }
+
+    .checkbox-row { display: flex; align-items: center; gap: 10px; margin-top: 6px; }
+    .checkbox-row input[type="checkbox"] { width: 16px; height: 16px; accent-color: #3551FF; cursor: pointer; flex-shrink: 0; }
+    .checkbox-row label { font-size: 0.83rem; color: #374151; cursor: pointer; }
+
+    .btn-row { display: flex; gap: 10px; margin-top: 28px; }
+    .btn-back { flex: 1; padding: 12px; background: #f3f4f6; color: #374151; border: none; border-radius: 10px; font-size: 0.9rem; font-weight: 700; cursor: pointer; }
+    .btn-next { flex: 2; padding: 12px; background: #3551FF; color: #fff; border: none; border-radius: 10px; font-size: 0.9rem; font-weight: 700; cursor: pointer; transition: filter 0.15s; }
+    .btn-next:hover { filter: brightness(1.08); }
+    .btn-next:disabled { opacity: 0.6; cursor: not-allowed; filter: none; }
+    .btn-skip { width: 100%; padding: 10px; background: none; border: none; color: #9ca3af; font-size: 0.82rem; cursor: pointer; margin-top: 10px; text-decoration: underline; }
+
+    .msg { padding: 11px 14px; border-radius: 8px; font-size: 0.82rem; margin-bottom: 16px; display: none; }
+    .msg.error { background: #fee2e2; color: #dc2626; }
+    .msg.success { background: #dcfce7; color: #16a34a; }
+
+    /* Loading state */
+    .loading-box { text-align: center; padding: 32px 0; display: none; }
+    .spinner { width: 36px; height: 36px; border: 3px solid #e5e7eb; border-top-color: #3551FF; border-radius: 50%; animation: spin 0.7s linear infinite; margin: 0 auto 16px; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .loading-title { font-weight: 700; color: #111; margin-bottom: 4px; }
+    .loading-sub { font-size: 0.82rem; color: #6b7280; }
+
+    /* Products found */
+    .products-found { margin-top: 8px; }
+    .product-item { display: flex; align-items: center; gap: 12px; padding: 12px; border: 1px solid #e5e7eb; border-radius: 10px; margin-bottom: 8px; }
+    .product-item img { width: 44px; height: 44px; object-fit: contain; border-radius: 6px; background: #f3f4f6; flex-shrink: 0; }
+    .product-item-placeholder { width: 44px; height: 44px; background: #f3f4f6; border-radius: 6px; display: flex; align-items: center; justify-content: center; font-size: 1.1rem; flex-shrink: 0; }
+    .product-item-name { font-size: 0.83rem; font-weight: 600; color: #111; line-height: 1.3; }
+    .product-item-asin { font-size: 0.72rem; color: #9ca3af; font-family: monospace; margin-top: 2px; }
+    .products-count { font-size: 0.85rem; font-weight: 700; color: #16a34a; margin-bottom: 12px; }
+
+    /* Success step */
+    .success-icon { font-size: 3rem; text-align: center; margin-bottom: 16px; }
+    .success-list { list-style: none; margin: 20px 0; }
+    .success-list li { display: flex; align-items: center; gap: 10px; font-size: 0.85rem; color: #374151; padding: 8px 0; border-bottom: 1px solid #f3f4f6; }
+    .success-list li:last-child { border-bottom: none; }
+    .check-icon { width: 20px; height: 20px; background: #dcfce7; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 0.65rem; color: #16a34a; flex-shrink: 0; }
+  </style>
+</head>
+<body>
+
+<div class="logo">
+  <div class="logo-text">Review<span>Guards</span></div>
+</div>
+
+<div class="progress-wrap">
+  <div class="progress-bar"><div class="progress-fill" id="progress-fill" style="width:33%"></div></div>
+  <div class="progress-label" id="progress-label">Schritt 1 von 3</div>
+</div>
+
+<div class="card">
+  <div id="msg" class="msg"></div>
+
+  <!-- STEP 1: Details -->
+  <div class="step active" id="step-1">
+    <div class="step-title">Deine Details</div>
+    <div class="step-sub">Hilf uns, dein Konto korrekt einzurichten.</div>
+    <div class="form-group">
+      <label class="form-label">Dein Name</label>
+      <input type="text" class="form-input" id="full-name" placeholder="Max Mustermann">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Markenname / Firmenname</label>
+      <input type="text" class="form-input" id="brand-name" placeholder="Muster GmbH">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Hauptmarktplatz</label>
+      <select class="form-input" id="marketplace">
+        <option value="DE">Amazon.de (Deutschland)</option>
+        <option value="GB">Amazon.co.uk (Großbritannien)</option>
+        <option value="FR">Amazon.fr (Frankreich)</option>
+        <option value="IT">Amazon.it (Italien)</option>
+        <option value="ES">Amazon.es (Spanien)</option>
+        <option value="US">Amazon.com (USA)</option>
+      </select>
+    </div>
+    <div class="btn-row">
+      <button class="btn-next" id="step1-next">Weiter →</button>
+    </div>
+  </div>
+
+  <!-- STEP 2: Seller ID -->
+  <div class="step" id="step-2">
+    <div class="step-title">Amazon Seller ID</div>
+    <div class="step-sub">Mit deiner Seller ID laden wir automatisch alle deine Produkte in das Dashboard. Die Seller ID ist öffentlich und wird nur zum Abrufen deiner ASINs verwendet.</div>
+
+    <div id="msg2" class="msg"></div>
+    <div class="loading-box" id="loading-box">
+      <div class="spinner"></div>
+      <div class="loading-title">Produkte werden geladen…</div>
+      <div class="loading-sub">Wir rufen deine ASINs von Amazon ab.</div>
+    </div>
+
+    <div id="step2-form">
+      <div class="form-group">
+        <label class="form-label">Seller ID <span class="optional">(empfohlen)</span></label>
+        <input type="text" class="form-input" id="seller-id" placeholder="z.B. A3P5ROKL5A1OLE">
+        <div class="form-hint">
+          <a href="https://sellercentral.amazon.de/sw/AccountInfo/MerchantToken/step/MerchantToken" target="_blank">Seller ID auf Seller Central finden →</a>
+          &nbsp;· Die Seller ID ist öffentlich zugänglich. Es werden maximal 50 Produkte importiert.
+        </div>
+      </div>
+      <div class="checkbox-row">
+        <input type="checkbox" id="no-seller-id">
+        <label for="no-seller-id">Ich habe keine Seller ID oder möchte sie nicht angeben</label>
+      </div>
+      <div class="btn-row" style="margin-top:24px;">
+        <button class="btn-back" id="step2-back">← Zurück</button>
+        <button class="btn-next" id="step2-next">Produkte laden →</button>
+      </div>
+    </div>
+
+    <div id="products-result" style="display:none;">
+      <div class="products-count" id="products-count"></div>
+      <div class="products-found" id="products-list"></div>
+      <div class="btn-row" style="margin-top:16px;">
+        <button class="btn-next" id="step2-confirm">Weiter mit diesen Produkten →</button>
+      </div>
+      <button class="btn-skip" id="step2-skip">Ohne Produkte fortfahren</button>
+    </div>
+  </div>
+
+  <!-- STEP 3: Done -->
+  <div class="step" id="step-3">
+    <div class="success-icon">🎉</div>
+    <div class="step-title">Einrichtung abgeschlossen!</div>
+    <div class="step-sub">Dein ReviewGuards-Konto ist bereit. Hier eine Zusammenfassung:</div>
+    <ul class="success-list" id="summary-list"></ul>
+    <div class="btn-row" style="margin-top:8px;">
+      <button class="btn-next" id="go-dashboard">Zum Dashboard →</button>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<script>
+  const { createClient } = window.supabase;
+  const sb = createClient('https://lgrnmiszhhahfcmctmwo.supabase.co', 'sb_publishable_E5tO2TvBrU8f1s5djnVOOQ_vk1djyAI');
+  const RAPID_KEY  = 'f8efc09e81msh6c57af2fcb726adp116390jsne4a9ac230e46';
+  const RAPID_HOST = 'real-time-amazon-data.p.rapidapi.com';
+
+  let currentUser = null;
+  let fetchedProducts = [];
+  let currentStep = 1;
+
+  async function init() {
+    const { data: { session } } = await sb.auth.getSession();
+    if (!session) { location.href = 'login.html'; return; }
+    currentUser = session.user;
+
+    // If already onboarded, go to dashboard
+    const { data: profile } = await sb.from('profiles').select('*').eq('user_id', currentUser.id).single();
+    if (profile?.onboarding_complete) { location.href = 'dashboard.html'; return; }
+
+    // Pre-fill company name if available
+    if (profile?.company_name) {
+      document.getElementById('brand-name').value = profile.company_name;
+    }
+  }
+
+  function setStep(n) {
+    document.querySelectorAll('.step').forEach(s => s.classList.remove('active'));
+    document.getElementById('step-' + n).classList.add('active');
+    currentStep = n;
+    const pct = Math.round((n / 3) * 100);
+    document.getElementById('progress-fill').style.width = pct + '%';
+    document.getElementById('progress-label').textContent = `Schritt ${n} von 3`;
+  }
+
+  function showMsg(id, text, type) {
+    const el = document.getElementById(id);
+    el.textContent = text; el.className = 'msg ' + type; el.style.display = 'block';
+  }
+  function hideMsg(id) { document.getElementById(id).style.display = 'none'; }
+
+  // STEP 1
+  document.getElementById('step1-next').addEventListener('click', async () => {
+    const fullName  = document.getElementById('full-name').value.trim();
+    const brandName = document.getElementById('brand-name').value.trim();
+    const marketplace = document.getElementById('marketplace').value;
+    if (!fullName || !brandName) { showMsg('msg', 'Bitte alle Felder ausfüllen', 'error'); return; }
+    hideMsg('msg');
+
+    const btn = document.getElementById('step1-next');
+    btn.disabled = true; btn.textContent = 'Speichern…';
+
+    await sb.from('profiles').upsert({
+      user_id: currentUser.id,
+      full_name: fullName,
+      brand_name: brandName,
+      company_name: brandName,
+      marketplace: marketplace
+    });
+
+    btn.disabled = false; btn.textContent = 'Weiter →';
+    setStep(2);
+  });
+
+  // STEP 2 back
+  document.getElementById('step2-back').addEventListener('click', () => setStep(1));
+
+  // No seller ID checkbox
+  document.getElementById('no-seller-id').addEventListener('change', function() {
+    document.getElementById('seller-id').disabled = this.checked;
+    document.getElementById('step2-next').textContent = this.checked ? 'Überspringen →' : 'Produkte laden →';
+  });
+
+  // STEP 2 next - fetch products
+  document.getElementById('step2-next').addEventListener('click', async () => {
+    const noSellerId = document.getElementById('no-seller-id').checked;
+    const sellerId = document.getElementById('seller-id').value.trim();
+
+    if (noSellerId || !sellerId) {
+      // Skip to step 3
+      await sb.from('profiles').update({ onboarding_complete: true }).eq('user_id', currentUser.id);
+      buildSummary(0);
+      setStep(3);
+      return;
+    }
+
+    // Save seller ID and fetch products
+    await sb.from('profiles').update({ seller_id: sellerId }).eq('user_id', currentUser.id);
+
+    const marketplace = document.getElementById('marketplace').value;
+    document.getElementById('step2-form').style.display = 'none';
+    document.getElementById('loading-box').style.display = 'block';
+    hideMsg('msg2');
+
+    try {
+      const res = await fetch(
+        `https://${RAPID_HOST}/seller-products?seller_id=${sellerId}&country=${marketplace}&page=1`,
+        { headers: { 'x-rapidapi-key': RAPID_KEY, 'x-rapidapi-host': RAPID_HOST } }
+      );
+      const json = await res.json();
+      console.log('API Response:', JSON.stringify(json));
+      const products = json.data?.products || json.data?.seller_products || json.products || [];
+      fetchedProducts = products;
+
+      document.getElementById('loading-box').style.display = 'none';
+
+      if (products.length === 0) {
+        document.getElementById('step2-form').style.display = 'block';
+        showMsg('msg2', `API-Antwort: ${JSON.stringify(json)}`, 'error');
+        return;
+      }
+
+      // Show found products
+      document.getElementById('products-count').textContent = `✓ ${products.length} Produkt${products.length !== 1 ? 'e' : ''} gefunden`;
+      document.getElementById('products-list').innerHTML = products.slice(0, 5).map(p => `
+        <div class="product-item">
+          ${p.product_photo ? `<img src="${p.product_photo}" alt="">` : `<div class="product-item-placeholder">📦</div>`}
+          <div>
+            <div class="product-item-name">${(p.product_title || p.asin || '').substring(0, 55)}…</div>
+            <div class="product-item-asin">ASIN: ${p.asin || '–'} · ★ ${p.product_star_rating || '–'}</div>
+          </div>
+        </div>`).join('') + (products.length > 5 ? `<div style="font-size:0.78rem;color:#9ca3af;text-align:center;padding:8px;">+ ${products.length - 5} weitere Produkte</div>` : '');
+
+      document.getElementById('products-result').style.display = 'block';
+
+    } catch(e) {
+      document.getElementById('loading-box').style.display = 'none';
+      document.getElementById('step2-form').style.display = 'block';
+      showMsg('msg2', 'Fehler beim Laden: ' + e.message, 'error');
+    }
+  });
+
+  // Confirm products
+  document.getElementById('step2-confirm').addEventListener('click', async () => {
+    const btn = document.getElementById('step2-confirm');
+    btn.disabled = true; btn.textContent = 'Produkte werden gespeichert…';
+
+    const inserts = fetchedProducts.slice(0, 50).map(p => ({
+      user_id: currentUser.id,
+      asin: p.asin,
+      name: p.product_title || p.asin,
+      image_url: p.product_photo || null,
+      rating: parseFloat(p.product_star_rating) || 0,
+      total_reviews: parseInt(String(p.product_num_ratings || '0').replace(/[.,]/g,'')) || 0,
+      negative_reviews: 0,
+      status: 'inactive'
+    })).filter(p => p.asin); // only valid ASINs
+
+    const { error } = await sb.from('products').insert(inserts);
+    if (error) console.error('Insert error:', error);
+
+    await sb.from('profiles').update({ onboarding_complete: true }).eq('user_id', currentUser.id);
+    buildSummary(inserts.length);
+    setStep(3);
+  });
+
+  document.getElementById('step2-skip').addEventListener('click', async () => {
+    await sb.from('profiles').update({ onboarding_complete: true }).eq('user_id', currentUser.id);
+    buildSummary(0);
+    setStep(3);
+  });
+
+  function buildSummary(productCount) {
+    const name = document.getElementById('full-name').value;
+    const brand = document.getElementById('brand-name').value;
+    const mp = document.getElementById('marketplace').options[document.getElementById('marketplace').selectedIndex].text;
+    document.getElementById('summary-list').innerHTML = `
+      <li><span class="check-icon">✓</span> Name: <strong style="margin-left:4px;">${name}</strong></li>
+      <li><span class="check-icon">✓</span> Marke: <strong style="margin-left:4px;">${brand}</strong></li>
+      <li><span class="check-icon">✓</span> Marktplatz: <strong style="margin-left:4px;">${mp}</strong></li>
+      <li><span class="check-icon">✓</span> Produkte importiert: <strong style="margin-left:4px;">${productCount}</strong></li>`;
+  }
+
+  document.getElementById('go-dashboard').addEventListener('click', () => location.href = 'dashboard.html');
+
+  init();
+</script>
+</body>
+</html>

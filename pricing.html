@@ -263,8 +263,6 @@
       color: var(--blue);
     }
 
-    .slider-wrap { position: relative; margin-bottom: 10px; }
-
     #vol-slider {
       -webkit-appearance: none;
       appearance: none;
@@ -310,6 +308,67 @@
     }
 
     .slider-tick.active { color: var(--blue); font-weight: 700; }
+
+    /* Slider bubble */
+    .slider-wrap {
+      position: relative;
+      margin-bottom: 10px;
+    }
+
+    #slider-bubble {
+      position: absolute;
+      top: -32px;
+      transform: translateX(-50%);
+      background: var(--blue);
+      color: var(--white);
+      font-size: 0.75rem;
+      font-weight: 700;
+      padding: 3px 8px;
+      border-radius: 20px;
+      pointer-events: none;
+      white-space: nowrap;
+      transition: left 0s;
+    }
+
+    #slider-bubble::after {
+      content: '';
+      position: absolute;
+      top: 100%;
+      left: 50%;
+      transform: translateX(-50%);
+      border: 4px solid transparent;
+      border-top-color: var(--blue);
+    }
+
+    /* Total price */
+    .total-price-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 14px 18px;
+      background: var(--gray-light);
+      border-radius: 10px;
+      margin-top: 12px;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .total-price-label {
+      font-size: 0.88rem;
+      color: #555;
+    }
+
+    .total-price-value {
+      font-size: 0.95rem;
+      color: #333;
+    }
+
+    .total-price-value strong {
+      font-size: 1.15rem;
+      font-weight: 900;
+      color: var(--blue);
+      margin-left: 4px;
+    }
 
     /* Savings bar */
     .savings-banner {
@@ -657,7 +716,7 @@
           <div class="pricing-per-label">Preis pro entfernter Bewertung</div>
           <div class="pricing-price-wrap">
             <span class="pricing-currency">€</span>
-            <span class="pricing-price" id="price-display">199</span>
+            <span class="pricing-price" id="price-display">129</span>
             <span class="pricing-unit">/ Bewertung</span>
           </div>
           <div class="pricing-success-note">zzgl. MwSt. · Nur bei Erfolg</div>
@@ -667,36 +726,38 @@
       <div class="pricing-card-body">
         <div class="slider-label-row">
           <span class="slider-label">Wie viele Bewertungen möchtest du entfernen?</span>
-          <span class="slider-current-vol" id="vol-display">1–10 Bewertungen</span>
+          <span class="slider-current-vol" id="vol-display">1 Bewertung</span>
         </div>
 
         <div class="slider-wrap">
-          <input type="range" id="vol-slider" min="0" max="5" step="1" value="0">
+          <input type="range" id="vol-slider" min="1" max="100" step="1" value="1">
+          <div id="slider-bubble">1</div>
         </div>
 
         <div class="slider-ticks">
-          <span class="slider-tick active" data-idx="0">1</span>
-          <span class="slider-tick" data-idx="1">10</span>
-          <span class="slider-tick" data-idx="2">50</span>
-          <span class="slider-tick" data-idx="3">125</span>
-          <span class="slider-tick" data-idx="4">300</span>
-          <span class="slider-tick" data-idx="5">500+</span>
+          <span class="slider-tick active">1</span>
+          <span class="slider-tick">10</span>
+          <span class="slider-tick">50</span>
+          <span class="slider-tick">100+</span>
         </div>
 
         <div class="savings-banner" id="savings-banner">
-          <span class="savings-text" id="savings-text">Standardpreis – ab 10 Bewertungen sparst du</span>
-          <span class="savings-amount" id="savings-amount">—</span>
+          <span class="savings-text" id="savings-text">Standardpreis – ab 10 Bewertungen sparst du automatisch.</span>
+          <span class="savings-amount" id="savings-amount">↑ Schieberegler bewegen</span>
+        </div>
+
+        <div class="total-price-row" id="total-price-row">
+          <span class="total-price-label">Gesamtpreis (zzgl. MwSt.)</span>
+          <span class="total-price-value"><span id="total-qty">1</span> × €<span id="total-unit">129</span> = <strong id="total-sum">€ 129</strong></span>
         </div>
 
         <div class="features-grid">
           <div class="feature-row"><div class="feature-check">✓</div><span>Analyse auf 15+ Marketplaces</span></div>
-          <div class="feature-row"><div class="feature-check">✓</div><span>Wöchentliches Monitoring neuer Bewertungen</span></div>
           <div class="feature-row"><div class="feature-check">✓</div><span>Persönlicher Ansprechpartner</span></div>
           <div class="feature-row"><div class="feature-check">✓</div><span>ASIN-Empfehlungsliste nach Ø-Gewichtung</span></div>
           <div class="feature-row"><div class="feature-check">✓</div><span>Vollständige Dokumentation jedes Falls</span></div>
           <div class="feature-row"><div class="feature-check">✓</div><span>Eskalation bis zur finalen Entscheidung</span></div>
           <div class="feature-row"><div class="feature-check">✓</div><span>Ergebnisbericht mit Bewertungsschnitt-Entwicklung</span></div>
-          <div class="feature-row"><div class="feature-check">✓</div><span>Buybox-Analyse &amp; Unterdrückungs-Alerts</span></div>
         </div>
       </div>
 
@@ -729,40 +790,28 @@
         </thead>
         <tbody>
           <tr>
-            <td>1 – 10</td>
-            <td><span class="tier-price">€ 199</span></td>
+            <td>1 – 9</td>
+            <td><span class="tier-price">€ 129</span></td>
             <td>—</td>
             <td></td>
           </tr>
           <tr>
-            <td>11 – 50</td>
-            <td><span class="tier-price">€ 189</span></td>
+            <td>10 – 49</td>
+            <td><span class="tier-price">€ 119</span></td>
             <td><span class="tier-savings-tag">– €10 / Bewertung</span></td>
             <td></td>
           </tr>
           <tr>
-            <td>51 – 125</td>
-            <td><span class="tier-price">€ 179</span></td>
+            <td>50 – 99</td>
+            <td><span class="tier-price">€ 109</span></td>
             <td><span class="tier-savings-tag">– €20 / Bewertung</span></td>
             <td></td>
           </tr>
           <tr class="highlight-row">
-            <td>126 – 300</td>
-            <td><span class="tier-price">€ 169</span></td>
+            <td>100+</td>
+            <td><span class="tier-price">€ 99</span></td>
             <td><span class="tier-savings-tag">– €30 / Bewertung</span></td>
-            <td><span class="tier-badge">Beliebteste Stufe</span></td>
-          </tr>
-          <tr>
-            <td>301 – 500</td>
-            <td><span class="tier-price">€ 159</span></td>
-            <td><span class="tier-savings-tag">– €40 / Bewertung</span></td>
-            <td></td>
-          </tr>
-          <tr>
-            <td>501+</td>
-            <td><span class="tier-price">€ 149</span></td>
-            <td><span class="tier-savings-tag">– €50 / Bewertung</span></td>
-            <td><span class="tier-badge">Bester Preis</span></td>
+            <td><span class="tier-badge">Bestes Preis-Leistungs-Verhältnis</span></td>
           </tr>
         </tbody>
       </table>
@@ -945,57 +994,105 @@
   document.querySelectorAll('.fade-up').forEach(el => io.observe(el));
 
   // ===== PRICING SLIDER =====
-  const tiers = [
-    { label: '1–10 Bewertungen',    price: 199, savings: null },
-    { label: '11–50 Bewertungen',   price: 189, savings: 10   },
-    { label: '51–125 Bewertungen',  price: 179, savings: 20   },
-    { label: '126–300 Bewertungen', price: 169, savings: 30   },
-    { label: '301–500 Bewertungen', price: 159, savings: 40   },
-    { label: '501+ Bewertungen',    price: 149, savings: 50   },
-  ];
-
   const slider       = document.getElementById('vol-slider');
   const priceDisplay = document.getElementById('price-display');
   const volDisplay   = document.getElementById('vol-display');
   const savingsText  = document.getElementById('savings-text');
   const savingsAmt   = document.getElementById('savings-amount');
   const ticks        = document.querySelectorAll('.slider-tick');
+  const bubble       = document.getElementById('slider-bubble');
+  const totalQty     = document.getElementById('total-qty');
+  const totalUnit    = document.getElementById('total-unit');
+  const totalSum     = document.getElementById('total-sum');
 
-  function updateSlider(idx) {
-    const tier = tiers[idx];
+  function getPrice(qty) {
+    if (qty >= 100) return 99;
+    if (qty >= 50)  return 109;
+    if (qty >= 10)  return 119;
+    return 129;
+  }
 
-    // Animate price
+  function getSavings(qty) {
+    if (qty >= 100) return 30;
+    if (qty >= 50)  return 20;
+    if (qty >= 10)  return 10;
+    return 0;
+  }
+
+  function getTierLabel(qty) {
+    return qty === 1 ? '1 Bewertung' : qty + ' Bewertungen';
+  }
+
+  function updateBubble(qty) {
+    const min = parseInt(slider.min);
+    const max = parseInt(slider.max);
+    const pct = (qty - min) / (max - min);
+    // Account for thumb width (~11px each side)
+    const thumbW = 11;
+    const trackW = slider.offsetWidth - thumbW * 2;
+    const left = thumbW + pct * trackW;
+    bubble.style.left = left + 'px';
+    bubble.textContent = qty === 100 ? '100+' : qty;
+  }
+
+  let animFrame = null;
+  function animatePrice(target) {
+    if (animFrame) cancelAnimationFrame(animFrame);
     const current = parseInt(priceDisplay.textContent);
-    const target  = tier.price;
-    const dur = 300;
+    if (current === target) return;
+    const dur = 250;
     const start = performance.now();
-    function tick(now) {
+    function step(now) {
       const p = Math.min((now - start) / dur, 1);
       priceDisplay.textContent = Math.round(current + (target - current) * p);
-      if (p < 1) requestAnimationFrame(tick);
+      if (p < 1) animFrame = requestAnimationFrame(step);
     }
-    requestAnimationFrame(tick);
+    animFrame = requestAnimationFrame(step);
+  }
 
-    volDisplay.textContent = tier.label;
+  function updateSlider() {
+    const qty = parseInt(slider.value);
+    const price   = getPrice(qty);
+    const savings = getSavings(qty);
 
-    if (tier.savings) {
+    animatePrice(price);
+    volDisplay.textContent = getTierLabel(qty);
+
+    if (savings > 0) {
       savingsText.textContent = 'Du sparst gegenüber dem Standardpreis:';
-      savingsAmt.textContent  = '– €' + tier.savings + ' pro Bewertung';
+      savingsAmt.textContent  = '– €' + savings + ' pro Bewertung';
     } else {
-      savingsText.textContent = 'Ab 10 Bewertungen erhältst du automatisch Mengenrabatt.';
+      savingsText.textContent = 'Standardpreis – ab 10 Bewertungen sparst du automatisch.';
       savingsAmt.textContent  = '↑ Schieberegler bewegen';
     }
 
-    // Update slider track fill
-    const pct = (idx / (tiers.length - 1)) * 100;
+    // Track fill
+    const pct = ((qty - 1) / 99) * 100;
     slider.style.background = `linear-gradient(to right, #3551FF ${pct}%, #e0e0e0 ${pct}%)`;
 
-    // Update ticks
-    ticks.forEach((t, i) => t.classList.toggle('active', i === idx));
+    // Active tick
+    ticks.forEach(t => {
+      t.classList.toggle('active',
+        (t.textContent === '1'    && qty < 10) ||
+        (t.textContent === '10'   && qty >= 10 && qty < 50) ||
+        (t.textContent === '50'   && qty >= 50 && qty < 100) ||
+        (t.textContent === '100+' && qty >= 100)
+      );
+    });
+
+    // Bubble
+    updateBubble(qty);
+
+    // Total price
+    const total = qty * price;
+    totalQty.textContent  = qty === 100 ? '100+' : qty;
+    totalUnit.textContent = price;
+    totalSum.textContent  = '€ ' + (qty === 100 ? '99+' : total.toLocaleString('de-DE'));
   }
 
-  slider.addEventListener('input', () => updateSlider(parseInt(slider.value)));
-  updateSlider(0);
+  slider.addEventListener('input', updateSlider);
+  window.addEventListener('resize', () => updateBubble(parseInt(slider.value)));
+  updateSlider();
 
   // ===== FAQ =====
   document.querySelectorAll('.faq-question').forEach(q => {

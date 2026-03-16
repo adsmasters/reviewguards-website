@@ -721,66 +721,11 @@
           </div>
 
           <div class="reviews-section-title">Verdächtige Bewertungen</div>
+          <div id="flagged-preview" style="display:none;"></div>
+          <div id="no-flagged-msg" style="display:none;text-align:center;padding:24px;color:#16a34a;font-weight:600;">✓ Keine verdächtigen Bewertungen auf der ersten Seite gefunden.</div>
 
-          <div class="review-item flagged">
-            <div class="review-top">
-              <div>
-                <div class="review-stars">★<span class="se">★★★★</span></div>
-                <div style="font-size:0.75rem;color:#888;margin-top:2px;">Verifizierter Kauf &bull; vor 3 Tagen</div>
-              </div>
-              <span class="review-flag flag-suspicious">⚠ Verdächtig</span>
-            </div>
-            <p class="review-text">„Produkt funktioniert überhaupt nicht. Sehr enttäuscht. Kauft das nicht!!!"</p>
-            <div class="review-reasons">
-              <span class="review-reason-tag">Kein sachlicher Inhalt</span>
-              <span class="review-reason-tag">Kein Beleg für Produktmangel</span>
-              <span class="review-reason-tag">Auffällig kurz nach Kauf</span>
-            </div>
-          </div>
-
-          <div class="review-item flagged">
-            <div class="review-top">
-              <div>
-                <div class="review-stars">★<span class="se">★★★★</span></div>
-                <div style="font-size:0.75rem;color:#888;margin-top:2px;">Verifizierter Kauf &bull; vor 5 Tagen</div>
-              </div>
-              <span class="review-flag flag-suspicious">⚠ Verdächtig</span>
-            </div>
-            <p class="review-text">„Habe dasselbe Produkt günstiger woanders gesehen. Komplette Geldverschwendung, nie wieder."</p>
-            <div class="review-reasons">
-              <span class="review-reason-tag">Preisvergleich ohne Produktbezug</span>
-              <span class="review-reason-tag">Verstößt gegen Community-Richtlinien</span>
-            </div>
-          </div>
-
-          <div class="review-item flagged">
-            <div class="review-top">
-              <div>
-                <div class="review-stars">★★<span class="se">★★★</span></div>
-                <div style="font-size:0.75rem;color:#888;margin-top:2px;">Verifizierter Kauf &bull; vor 8 Tagen</div>
-              </div>
-              <span class="review-flag flag-suspicious">⚠ Verdächtig</span>
-            </div>
-            <p class="review-text">„Verpackung war beschädigt. Verkäufer hat nicht auf meine Nachrichten geantwortet (Anm.: kein Kontaktversuch nachweisbar)."</p>
-            <div class="review-reasons">
-              <span class="review-reason-tag">Sachlich falsche Angabe</span>
-              <span class="review-reason-tag">Kein Kontaktversuch dokumentiert</span>
-            </div>
-          </div>
-
-          <div class="review-item clean">
-            <div class="review-top">
-              <div>
-                <div class="review-stars">★★★★★</div>
-                <div style="font-size:0.75rem;color:#888;margin-top:2px;">Verifizierter Kauf &bull; vor 14 Tagen</div>
-              </div>
-              <span class="review-flag flag-ok">✓ Regelkonform</span>
-            </div>
-            <p class="review-text" style="color:#555;">„Sehr gute Qualität, hält was es verspricht. Schnelle Lieferung, gerne wieder."</p>
-          </div>
-
-          <div class="results-cta">
-            <h3>3 entfernbare Bewertungen gefunden</h3>
+          <div class="results-cta" id="results-cta">
+            <h3 id="results-cta-title">Bewertungen analysiert</h3>
             <p>Unser Team übernimmt den gesamten Entfernungsprozess für dich – auf Erfolgsbasis, keine Vorauszahlung.</p>
             <a href="index.html#kontakt" class="btn btn-blue">Jetzt kostenlos entfernen lassen →</a>
           </div>
@@ -965,32 +910,114 @@
   });
 
   // ===== CHECKER LOGIC =====
+  const RAPID_KEY  = 'f8efc09e81msh6c57af2fcb726adp116390jsne4a9ac230e46';
+  const RAPID_HOST = 'real-time-amazon-data.p.rapidapi.com';
+
   const submitBtn  = document.getElementById('checker-submit');
   const loadingDiv = document.getElementById('checker-loading');
   const resultsDiv = document.getElementById('checker-results');
   const inputEl    = document.getElementById('checker-input');
-  const formWrap   = document.getElementById('checker-form-wrap');
 
   function extractAsin(val) {
-    const m = val.match(/\/dp\/([A-Z0-9]{10})/i) || val.match(/^([A-Z0-9]{10})$/i);
-    return m ? m[1].toUpperCase() : val.trim().toUpperCase().substring(0, 10) || 'B0DEMO12345';
+    const m = val.match(/\/dp\/([A-Z0-9]{10})/i)
+           || val.match(/\/gp\/product\/([A-Z0-9]{10})/i)
+           || val.match(/([A-Z0-9]{10})(?:[/?]|$)/i);
+    return m ? m[1].toUpperCase() : null;
+  }
+
+  function extractCountry(val) {
+    if (val.includes('amazon.de'))  return 'DE';
+    if (val.includes('amazon.co.uk')) return 'GB';
+    if (val.includes('amazon.fr'))  return 'FR';
+    if (val.includes('amazon.it'))  return 'IT';
+    if (val.includes('amazon.es'))  return 'ES';
+    return 'DE'; // default
   }
 
   function setLoadingStep(active) {
     for (let i = 1; i <= 4; i++) {
       const el = document.getElementById('ls-' + i);
       el.classList.remove('active', 'done');
-      if (i < active) el.classList.add('done'), el.querySelector('.loading-step-icon').textContent = '✓';
-      else if (i === active) el.classList.add('active'), el.querySelector('.loading-step-icon').textContent = i;
-      else el.querySelector('.loading-step-icon').textContent = i;
+      if (i < active) { el.classList.add('done'); el.querySelector('.loading-step-icon').textContent = '✓'; }
+      else if (i === active) { el.classList.add('active'); el.querySelector('.loading-step-icon').textContent = i; }
+      else { el.querySelector('.loading-step-icon').textContent = i; }
     }
   }
 
-  submitBtn.addEventListener('click', () => {
+  // Heuristic: flag suspicious reviews
+  function analyzeReviews(reviews) {
+    const flagged = [];
+    reviews.forEach(r => {
+      const reasons = [];
+      const stars   = parseInt(r.review_star_rating) || 0;
+      const text    = (r.review_comment || '').trim();
+      const title   = (r.review_title  || '').trim();
+      const verified = r.verified_purchase;
+
+      // 1. Unverified + negative
+      if (!verified && stars <= 2)
+        reasons.push('Nicht verifizierter Kauf mit negativer Bewertung');
+
+      // 2. Extremely short or empty review text
+      if (text.length < 25 && stars <= 2)
+        reasons.push('Sehr kurzer Bewertungstext – kein konkreter Inhalt');
+
+      // 3. Title-only review (no body)
+      if (!text && title)
+        reasons.push('Kein Bewertungstext vorhanden');
+
+      // 4. Keyword patterns typical for competitor attacks
+      const attackWords = ['schlecht', 'katastrophe', 'betrug', 'fake', 'müll', 'schrott',
+                           'nie wieder', 'horrible', 'terrible', 'scam', 'fraud', 'fake product'];
+      const combined = (text + ' ' + title).toLowerCase();
+      if (stars <= 2 && attackWords.some(w => combined.includes(w)))
+        reasons.push('Enthält typische Angriffsbegriffe');
+
+      // 5. Unverified + 1-star with no helpful votes
+      if (!verified && stars === 1 && reasons.length === 0)
+        reasons.push('1-Stern-Bewertung ohne Kaufnachweis');
+
+      if (reasons.length > 0) {
+        flagged.push({ ...r, reasons });
+      }
+    });
+    return flagged;
+  }
+
+  function starImpact(currentRating, totalReviews, removeCount) {
+    if (!currentRating || !totalReviews) return null;
+    // Approx: removing 1-star reviews raises the average
+    const currentSum = currentRating * totalReviews;
+    const newTotal   = totalReviews - removeCount;
+    if (newTotal <= 0) return null;
+    // Assume flagged are 1-star average
+    const newAvg = (currentSum - removeCount) / newTotal;
+    const diff   = newAvg - currentRating;
+    return diff > 0 ? '+' + diff.toFixed(1) + ' ★' : diff.toFixed(1) + ' ★';
+  }
+
+  function showError(msg) {
+    loadingDiv.style.display = 'none';
+    submitBtn.disabled = false;
+    document.querySelector('.checker-input-row').style.display = '';
+    document.querySelector('.checker-tabs').style.display = '';
+    document.querySelector('.checker-hint').style.display = '';
+    inputEl.style.borderColor = '#dc2626';
+    inputEl.placeholder = msg;
+    inputEl.value = '';
+    setTimeout(() => { inputEl.style.borderColor = ''; inputEl.placeholder = 'https://www.amazon.de/dp/B0XXXXXXXXX'; }, 4000);
+  }
+
+  submitBtn.addEventListener('click', async () => {
     const val = inputEl.value.trim();
     if (!val) { inputEl.focus(); inputEl.style.borderColor = '#dc2626'; setTimeout(() => inputEl.style.borderColor = '', 1500); return; }
 
-    // Hide form elements, show loading
+    const asin = extractAsin(val);
+    if (!asin) { showError('Bitte eine gültige Amazon-URL oder ASIN eingeben'); return; }
+
+    const country = extractCountry(val);
+
+    // Show loading
     document.querySelector('.checker-tabs').style.display = 'none';
     document.querySelector('.checker-input-row').style.display = 'none';
     document.querySelector('.checker-hint').style.display = 'none';
@@ -998,38 +1025,127 @@
     loadingDiv.style.display = 'block';
     submitBtn.disabled = true;
 
-    const asin = extractAsin(val);
-
     setLoadingStep(1);
-    setTimeout(() => setLoadingStep(2), 900);
-    setTimeout(() => setLoadingStep(3), 1900);
-    setTimeout(() => setLoadingStep(4), 3000);
 
-    setTimeout(() => {
-      loadingDiv.style.display = 'none';
+    try {
+      // Step 1: Product details (rating + total reviews)
+      setLoadingStep(1);
+      const detailsRes = await fetch(
+        `https://${RAPID_HOST}/product-details?asin=${asin}&country=${country}`,
+        { headers: { 'x-rapidapi-key': RAPID_KEY, 'x-rapidapi-host': RAPID_HOST } }
+      );
+      if (!detailsRes.ok) {
+        const errText = await detailsRes.text();
+        throw new Error(`API Fehler ${detailsRes.status}: ${errText.substring(0, 200)}`);
+      }
+      const detailsJson = await detailsRes.json();
+      if (detailsJson.status && detailsJson.status !== 'OK') {
+        throw new Error(`API Status: ${detailsJson.status} – ${detailsJson.message || ''}`);
+      }
+      const product     = detailsJson.data || {};
+      const totalReviews   = parseInt(String(product.product_num_ratings || '0').replace(/\./g,'').replace(/,/g,'')) || 0;
+      const currentRating  = parseFloat(product.product_star_rating) || 0;
+      const productTitle   = product.product_title || asin;
+
+      setLoadingStep(2);
+
+      // Step 2: Fetch reviews (up to 5 pages = ~50 reviews)
+      const MAX_PAGES = 5;
+      let allReviews = [];
+      for (let page = 1; page <= MAX_PAGES; page++) {
+        const reviewsRes = await fetch(
+          `https://${RAPID_HOST}/product-reviews?asin=${asin}&country=${country}&page=${page}&sort_by=TOP_REVIEWS&star_rating=ALL&verified_purchases_only=false`,
+          { headers: { 'x-rapidapi-key': RAPID_KEY, 'x-rapidapi-host': RAPID_HOST } }
+        );
+        if (!reviewsRes.ok) break; // stop on error, use what we have
+        const reviewsJson = await reviewsRes.json();
+        const pageReviews = reviewsJson.data?.reviews || [];
+        allReviews = allReviews.concat(pageReviews);
+        if (pageReviews.length === 0) break; // no more pages
+      }
+      const reviews = allReviews;
+
+      setLoadingStep(3);
+
+      // Step 3: Analyze
+      const flagged    = analyzeReviews(reviews);
+      const removable  = flagged.length;
+      const riskPct    = reviews.length > 0 ? Math.round((removable / reviews.length) * 100) : 0;
+      const riskLabel  = riskPct >= 20 ? 'Hohes Risiko' : riskPct >= 8 ? 'Mittleres Risiko' : 'Geringes Risiko';
+      const riskColor  = riskPct >= 20 ? '#dc2626' : riskPct >= 8 ? '#f59e0b' : '#16a34a';
+      const potential  = starImpact(currentRating, totalReviews, removable);
+
+      setLoadingStep(4);
+      await new Promise(r => setTimeout(r, 600));
 
       // Populate results
+      loadingDiv.style.display = 'none';
       document.getElementById('result-asin-display').textContent = asin;
-      document.getElementById('result-risk-label').textContent = 'Hohes Risiko';
+      document.getElementById('result-risk-label').textContent   = riskLabel;
+      document.getElementById('result-risk-label').style.color   = riskColor;
+      document.getElementById('result-risk-bar').style.width     = riskPct + '%';
+      document.getElementById('result-risk-bar').style.background = riskColor;
 
-      // Animate stats
-      animateCount('stat-total', 847, '');
-      animateCount('stat-flagged', 3, '');
-      animateCount('stat-removable', 3, '');
-      document.getElementById('stat-potential').textContent = '+0.4 ★';
+      animateCount('stat-total',     reviews.length, '');
+      animateCount('stat-flagged',   flagged.length,  '');
+      animateCount('stat-removable', removable,       '');
+      document.getElementById('stat-potential').textContent = potential || (removable > 0 ? '+0.1 ★' : '–');
 
-      // Animate risk bar
-      setTimeout(() => {
-        document.getElementById('result-risk-bar').style.width = '74%';
-      }, 100);
+      // Show product title if available
+      const titleEl = document.getElementById('result-product-title');
+      if (titleEl) titleEl.textContent = productTitle.length > 60 ? productTitle.substring(0, 60) + '…' : productTitle;
+
+      // Show flagged review previews
+      const flaggedList = document.getElementById('flagged-preview');
+      const noFlaggedMsg = document.getElementById('no-flagged-msg');
+      const ctaTitle = document.getElementById('results-cta-title');
+      if (flagged.length > 0) {
+        flaggedList.innerHTML = flagged.map(r => `
+          <div style="border:1px solid #fee2e2;background:#fff5f5;border-radius:8px;padding:12px 16px;margin-bottom:10px;">
+            <div style="display:flex;justify-content:space-between;margin-bottom:6px;">
+              <span style="font-weight:700;font-size:0.85rem;">★ ${r.review_star_rating} – ${(r.review_title||'Ohne Titel').substring(0,50)}</span>
+              <span style="font-size:0.75rem;color:#dc2626;font-weight:700;">⚠ Verdächtig</span>
+            </div>
+            <p style="font-size:0.82rem;color:#333;margin-bottom:6px;">${(r.review_comment||'Kein Text').substring(0,150)}…</p>
+            <ul style="font-size:0.75rem;color:#dc2626;padding-left:16px;margin:0;">${r.reasons.map(reason => `<li>${reason}</li>`).join('')}</ul>
+          </div>`).join('');
+        flaggedList.style.display = 'block';
+        if (noFlaggedMsg) noFlaggedMsg.style.display = 'none';
+        if (ctaTitle) ctaTitle.textContent = removable + ' entfernbare Bewertung' + (removable !== 1 ? 'en' : '') + ' gefunden';
+      } else {
+        if (flaggedList) flaggedList.style.display = 'none';
+        if (noFlaggedMsg) noFlaggedMsg.style.display = 'block';
+        if (ctaTitle) ctaTitle.textContent = 'Keine verdächtigen Bewertungen gefunden';
+      }
 
       resultsDiv.style.display = 'block';
       resultsDiv.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    }, 4000);
+
+    } catch(err) {
+      console.error(err);
+      // Show the actual error message so we can debug
+      loadingDiv.style.display = 'none';
+      submitBtn.disabled = false;
+      document.querySelector('.checker-input-row').style.display = '';
+      document.querySelector('.checker-tabs').style.display = '';
+      document.querySelector('.checker-hint').style.display = '';
+      // Display error visibly below the input
+      let errBox = document.getElementById('checker-error-box');
+      if (!errBox) {
+        errBox = document.createElement('div');
+        errBox.id = 'checker-error-box';
+        errBox.style.cssText = 'margin-top:12px;padding:12px 16px;background:#fee2e2;border:1px solid #fca5a5;border-radius:8px;font-size:0.85rem;color:#dc2626;';
+        document.querySelector('.checker-hint').after(errBox);
+      }
+      errBox.textContent = '⚠ ' + (err.message || 'Unbekannter Fehler – bitte Konsole prüfen');
+      errBox.style.display = 'block';
+      setTimeout(() => { if (errBox) errBox.style.display = 'none'; }, 10000);
+    }
   });
 
   function animateCount(id, target, suffix) {
     const el = document.getElementById(id);
+    if (!el) return;
     const dur = 1000;
     const start = performance.now();
     function tick(now) {
