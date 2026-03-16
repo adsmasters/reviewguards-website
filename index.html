@@ -394,60 +394,6 @@
       color: #aaa;
     }
 
-    /* ========== LOGO STRIP ========== */
-    #logo-strip {
-      background: #fff;
-      border-top: 1px solid #f0f0f0;
-      border-bottom: 1px solid #f0f0f0;
-      padding: 20px 0;
-      overflow: hidden;
-    }
-    .logo-strip-label {
-      text-align: center;
-      font-size: 0.75rem;
-      font-weight: 700;
-      color: #9ca3af;
-      letter-spacing: 0.1em;
-      text-transform: uppercase;
-      margin-bottom: 16px;
-    }
-    .logo-track-outer {
-      overflow: hidden;
-      position: relative;
-    }
-    .logo-track-outer::before,
-    .logo-track-outer::after {
-      content: '';
-      position: absolute;
-      top: 0; bottom: 0;
-      width: 80px;
-      z-index: 2;
-      pointer-events: none;
-    }
-    .logo-track-outer::before { left: 0; background: linear-gradient(to right, #fff, transparent); }
-    .logo-track-outer::after  { right: 0; background: linear-gradient(to left, #fff, transparent); }
-    .logo-track {
-      display: flex;
-      gap: 48px;
-      align-items: center;
-      width: max-content;
-      animation: logoScroll 28s linear infinite;
-    }
-    .logo-track:hover { animation-play-state: paused; }
-    @keyframes logoScroll {
-      0%   { transform: translateX(0); }
-      100% { transform: translateX(-50%); }
-    }
-    .logo-track img {
-      height: 36px;
-      width: auto;
-      max-width: 120px;
-      object-fit: contain;
-      filter: grayscale(1) opacity(0.55);
-      transition: filter 0.2s;
-    }
-    .logo-track img:hover { filter: grayscale(0) opacity(1); }
-
     /* ========== STATS BAR ========== */
     #stats {
       background: var(--gray-dark);
@@ -550,18 +496,17 @@
       flex-shrink: 0;
     }
 
-    .logo-item span {
-      font-size: 1.1rem;
-      font-weight: 900;
-      letter-spacing: -0.03em;
-      color: #bbb;
-      white-space: nowrap;
-      transition: color 0.2s;
-      user-select: none;
+    .logo-item img {
+      height: 38px;
+      width: auto;
+      max-width: 130px;
+      object-fit: contain;
+      filter: grayscale(1) opacity(0.5);
+      transition: filter 0.2s;
     }
 
-    .logo-item:hover span {
-      color: #111;
+    .logo-item:hover img {
+      filter: grayscale(0) opacity(1);
     }
 
     /* ========== PROBLEM ========== */
@@ -2396,33 +2341,6 @@
 
 
 <!-- ========== LOGO STRIP ========== -->
-<section id="logo-strip">
-  <p class="logo-strip-label">Vertrauen von führenden Marken</p>
-  <div class="logo-track-outer">
-    <div class="logo-track">
-      <img src="https://adsmasters.de/wp-content/uploads/2025/12/Logo_of_Red_bull.svg.webp" alt="Red Bull">
-      <img src="https://adsmasters.de/wp-content/uploads/2024/05/reckitt-1.png" alt="Reckitt">
-      <img src="https://adsmasters.de/wp-content/uploads/2024/05/Brita.png" alt="Brita">
-      <img src="https://adsmasters.de/wp-content/uploads/2025/02/Durex-1.jpg" alt="Durex">
-      <img src="https://adsmasters.de/wp-content/uploads/2024/05/clementoni.png" alt="Clementoni">
-      <img src="https://adsmasters.de/wp-content/uploads/2024/05/mavi-1.png" alt="Mavi">
-      <img src="https://adsmasters.de/wp-content/uploads/2024/05/recoactiv.png" alt="Recoactiv">
-      <img src="https://adsmasters.de/wp-content/uploads/2024/05/sigor.png" alt="Sigor">
-      <img src="https://adsmasters.de/wp-content/uploads/2025/02/Brooklyn-soap.jpg" alt="Brooklyn Soap">
-      <!-- Duplicate set for seamless loop -->
-      <img src="https://adsmasters.de/wp-content/uploads/2025/12/Logo_of_Red_bull.svg.webp" alt="Red Bull">
-      <img src="https://adsmasters.de/wp-content/uploads/2024/05/reckitt-1.png" alt="Reckitt">
-      <img src="https://adsmasters.de/wp-content/uploads/2024/05/Brita.png" alt="Brita">
-      <img src="https://adsmasters.de/wp-content/uploads/2025/02/Durex-1.jpg" alt="Durex">
-      <img src="https://adsmasters.de/wp-content/uploads/2024/05/clementoni.png" alt="Clementoni">
-      <img src="https://adsmasters.de/wp-content/uploads/2024/05/mavi-1.png" alt="Mavi">
-      <img src="https://adsmasters.de/wp-content/uploads/2024/05/recoactiv.png" alt="Recoactiv">
-      <img src="https://adsmasters.de/wp-content/uploads/2024/05/sigor.png" alt="Sigor">
-      <img src="https://adsmasters.de/wp-content/uploads/2025/02/Brooklyn-soap.jpg" alt="Brooklyn Soap">
-    </div>
-  </div>
-</section>
-
 <!-- ========== STATS BAR ========== -->
 <section id="stats">
   <div class="stats-grid container">
@@ -2444,31 +2362,25 @@
 
 <!-- ========== LOGO SLIDER ========== -->
 <section id="logo-slider">
-  <p class="logo-slider-label">Vertrauen von Amazon-Verkäufern aus ganz Deutschland</p>
+  <p class="logo-slider-label">Vertrauen von führenden Marken</p>
   <div class="logo-track-wrapper">
     <div class="logo-track">
       <!-- Set 1 -->
-      <div class="logo-item"><span>NORDLICHT</span></div>
-      <div class="logo-item"><span>Bergmann & Co.</span></div>
-      <div class="logo-item"><span>VITAWERK</span></div>
-      <div class="logo-item"><span>Müller Handels GmbH</span></div>
-      <div class="logo-item"><span>SPORTLINE</span></div>
-      <div class="logo-item"><span>Haushaltsprofi</span></div>
-      <div class="logo-item"><span>TECHFORMA</span></div>
-      <div class="logo-item"><span>Grünfeld & Söhne</span></div>
-      <div class="logo-item"><span>BEAUTYHAUS</span></div>
-      <div class="logo-item"><span>Steiner Imports</span></div>
+      <div class="logo-item"><img src="https://adsmasters.de/wp-content/uploads/2024/05/Brita.png" alt="Brita"></div>
+      <div class="logo-item"><img src="https://adsmasters.de/wp-content/uploads/2025/02/Durex-1.jpg" alt="Durex"></div>
+      <div class="logo-item"><img src="https://adsmasters.de/wp-content/uploads/2024/05/clementoni.png" alt="Clementoni"></div>
+      <div class="logo-item"><img src="https://adsmasters.de/wp-content/uploads/2024/05/mavi-1.png" alt="Mavi"></div>
+      <div class="logo-item"><img src="https://adsmasters.de/wp-content/uploads/2024/05/recoactiv.png" alt="Recoactiv"></div>
+      <div class="logo-item"><img src="https://adsmasters.de/wp-content/uploads/2024/05/sigor.png" alt="Sigor"></div>
+      <div class="logo-item"><img src="https://adsmasters.de/wp-content/uploads/2025/02/Brooklyn-soap.jpg" alt="Brooklyn Soap"></div>
       <!-- Set 2 — duplicate for seamless loop -->
-      <div class="logo-item"><span>NORDLICHT</span></div>
-      <div class="logo-item"><span>Bergmann & Co.</span></div>
-      <div class="logo-item"><span>VITAWERK</span></div>
-      <div class="logo-item"><span>Müller Handels GmbH</span></div>
-      <div class="logo-item"><span>SPORTLINE</span></div>
-      <div class="logo-item"><span>Haushaltsprofi</span></div>
-      <div class="logo-item"><span>TECHFORMA</span></div>
-      <div class="logo-item"><span>Grünfeld & Söhne</span></div>
-      <div class="logo-item"><span>BEAUTYHAUS</span></div>
-      <div class="logo-item"><span>Steiner Imports</span></div>
+      <div class="logo-item"><img src="https://adsmasters.de/wp-content/uploads/2024/05/Brita.png" alt="Brita"></div>
+      <div class="logo-item"><img src="https://adsmasters.de/wp-content/uploads/2025/02/Durex-1.jpg" alt="Durex"></div>
+      <div class="logo-item"><img src="https://adsmasters.de/wp-content/uploads/2024/05/clementoni.png" alt="Clementoni"></div>
+      <div class="logo-item"><img src="https://adsmasters.de/wp-content/uploads/2024/05/mavi-1.png" alt="Mavi"></div>
+      <div class="logo-item"><img src="https://adsmasters.de/wp-content/uploads/2024/05/recoactiv.png" alt="Recoactiv"></div>
+      <div class="logo-item"><img src="https://adsmasters.de/wp-content/uploads/2024/05/sigor.png" alt="Sigor"></div>
+      <div class="logo-item"><img src="https://adsmasters.de/wp-content/uploads/2025/02/Brooklyn-soap.jpg" alt="Brooklyn Soap"></div>
     </div>
   </div>
 </section>
