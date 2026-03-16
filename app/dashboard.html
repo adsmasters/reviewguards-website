@@ -399,7 +399,7 @@
     showToast('Aktiviert – analysiere Bewertungen…');
     try {
       let reviews = [];
-      for (let page = 1; page <= 5; page++) {
+      for (let page = 1; page <= 10; page++) {
         const res = await fetch(
           `https://${RAPID_HOST}/product-reviews?asin=${asin}&country=DE&page=${page}&sort_by=TOP_REVIEWS&star_rating=ALL&verified_purchases_only=false`,
           { headers: { 'x-rapidapi-key': RAPID_KEY, 'x-rapidapi-host': RAPID_HOST } }
