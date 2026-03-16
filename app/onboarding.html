@@ -13,12 +13,14 @@
     .logo-text span { color: #3551FF; }
 
     /* Progress bar */
-    .progress-wrap { width: 100%; max-width: 520px; margin-bottom: 24px; }
+    .progress-wrap { width: 100%; max-width: 520px; margin-bottom: 24px; transition: max-width 0.4s; }
+    .progress-wrap.wide { max-width: 760px; }
     .progress-bar { height: 4px; background: #e5e7eb; border-radius: 2px; overflow: hidden; }
     .progress-fill { height: 100%; background: #3551FF; border-radius: 2px; transition: width 0.4s ease; }
     .progress-label { font-size: 0.75rem; color: #9ca3af; margin-top: 6px; text-align: right; }
 
-    .card { background: #fff; border-radius: 20px; padding: 40px; width: 100%; max-width: 520px; box-shadow: 0 4px 32px rgba(53,81,255,0.1); }
+    .card { background: #fff; border-radius: 20px; padding: 40px; width: 100%; max-width: 520px; box-shadow: 0 4px 32px rgba(53,81,255,0.1); transition: max-width 0.4s; }
+    .card.wide { max-width: 760px; }
     .step { display: none; }
     .step.active { display: block; }
 
@@ -65,6 +67,11 @@
     .product-item-asin { font-size: 0.72rem; color: #9ca3af; font-family: monospace; margin-top: 2px; }
     .products-count { font-size: 0.85rem; font-weight: 700; color: #16a34a; margin-bottom: 12px; }
 
+    /* Vollmacht iframe */
+    .vollmacht-frame { width: 100%; height: 520px; border: 1.5px solid #e5e7eb; border-radius: 12px; display: block; }
+    .signed-badge { display: none; align-items: center; gap: 8px; background: #dcfce7; border: 1px solid #86efac; color: #16a34a; border-radius: 10px; padding: 12px 16px; font-size: 0.88rem; font-weight: 700; margin-top: 16px; }
+    .signed-badge.visible { display: flex; }
+
     /* Success step */
     .success-icon { font-size: 3rem; text-align: center; margin-bottom: 16px; }
     .success-list { list-style: none; margin: 20px 0; }
@@ -79,12 +86,12 @@
   <div class="logo-text">Review<span>Guards</span></div>
 </div>
 
-<div class="progress-wrap">
-  <div class="progress-bar"><div class="progress-fill" id="progress-fill" style="width:33%"></div></div>
-  <div class="progress-label" id="progress-label">Schritt 1 von 3</div>
+<div class="progress-wrap" id="progress-wrap">
+  <div class="progress-bar"><div class="progress-fill" id="progress-fill" style="width:25%"></div></div>
+  <div class="progress-label" id="progress-label">Schritt 1 von 4</div>
 </div>
 
-<div class="card">
+<div class="card" id="main-card">
   <div id="msg" class="msg"></div>
 
   <!-- STEP 1: Details -->
@@ -156,8 +163,32 @@
     </div>
   </div>
 
-  <!-- STEP 3: Done -->
+  <!-- STEP 3: Vollmacht -->
   <div class="step" id="step-3">
+    <div class="step-title">Vollmacht unterzeichnen</div>
+    <div class="step-sub">Damit wir bei Amazon für dich tätig werden können, benötigen wir deine Vollmacht. Bitte unterzeichne das Dokument direkt hier.</div>
+
+    <div class="loading-box" id="vollmacht-loading" style="display:block;">
+      <div class="spinner"></div>
+      <div class="loading-title">Vollmacht wird vorbereitet…</div>
+      <div class="loading-sub">Einen Moment bitte.</div>
+    </div>
+
+    <div id="vollmacht-error" class="msg error"></div>
+
+    <div id="vollmacht-wrap" style="display:none;">
+      <iframe id="vollmacht-iframe" class="vollmacht-frame" src="" allowfullscreen></iframe>
+      <div class="signed-badge" id="signed-badge">✓ Vollmacht erfolgreich unterzeichnet!</div>
+      <div class="btn-row">
+        <button class="btn-next" id="step3-next" disabled>Weiter →</button>
+      </div>
+    </div>
+
+    <button class="btn-skip" id="step3-skip">Vollmacht später unterzeichnen</button>
+  </div>
+
+  <!-- STEP 4: Done -->
+  <div class="step" id="step-4">
     <div class="success-icon">🎉</div>
     <div class="step-title">Einrichtung abgeschlossen!</div>
     <div class="step-sub">Dein ReviewGuards-Konto ist bereit. Hier eine Zusammenfassung:</div>
@@ -174,33 +205,37 @@
   const sb = createClient('https://lgrnmiszhhahfcmctmwo.supabase.co', 'sb_publishable_E5tO2TvBrU8f1s5djnVOOQ_vk1djyAI');
   const RAPID_KEY  = 'f8efc09e81msh6c57af2fcb726adp116390jsne4a9ac230e46';
   const RAPID_HOST = 'real-time-amazon-data.p.rapidapi.com';
+  // NOTE: Move to server-side (Supabase Edge Function) before production
+  const PANDADOC_KEY      = '400ff1f3a967aec8734fcef82b9da12e9c46433e';
+  const PANDADOC_TEMPLATE = 'bZplaYDwKhobs7KB93BG';
 
   let currentUser = null;
   let fetchedProducts = [];
   let currentStep = 1;
+  let importedCount = 0;
 
   async function init() {
     const { data: { session } } = await sb.auth.getSession();
     if (!session) { location.href = 'login.html'; return; }
     currentUser = session.user;
 
-    // If already onboarded, go to dashboard
     const { data: profile } = await sb.from('profiles').select('*').eq('user_id', currentUser.id).single();
     if (profile?.onboarding_complete) { location.href = 'dashboard.html'; return; }
-
-    // Pre-fill company name if available
-    if (profile?.company_name) {
-      document.getElementById('brand-name').value = profile.company_name;
-    }
+    if (profile?.company_name) document.getElementById('brand-name').value = profile.company_name;
   }
 
   function setStep(n) {
     document.querySelectorAll('.step').forEach(s => s.classList.remove('active'));
     document.getElementById('step-' + n).classList.add('active');
     currentStep = n;
-    const pct = Math.round((n / 3) * 100);
+    const pct = Math.round((n / 4) * 100);
     document.getElementById('progress-fill').style.width = pct + '%';
-    document.getElementById('progress-label').textContent = `Schritt ${n} von 3`;
+    document.getElementById('progress-label').textContent = `Schritt ${n} von 4`;
+    // Widen card for Vollmacht step
+    const wide = n === 3;
+    document.getElementById('main-card').classList.toggle('wide', wide);
+    document.getElementById('progress-wrap').classList.toggle('wide', wide);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   }
 
   function showMsg(id, text, type) {
@@ -209,52 +244,45 @@
   }
   function hideMsg(id) { document.getElementById(id).style.display = 'none'; }
 
-  // STEP 1
+  // ── STEP 1 ──
   document.getElementById('step1-next').addEventListener('click', async () => {
-    const fullName  = document.getElementById('full-name').value.trim();
-    const brandName = document.getElementById('brand-name').value.trim();
+    const fullName    = document.getElementById('full-name').value.trim();
+    const brandName   = document.getElementById('brand-name').value.trim();
     const marketplace = document.getElementById('marketplace').value;
     if (!fullName || !brandName) { showMsg('msg', 'Bitte alle Felder ausfüllen', 'error'); return; }
     hideMsg('msg');
-
     const btn = document.getElementById('step1-next');
     btn.disabled = true; btn.textContent = 'Speichern…';
-
     await sb.from('profiles').upsert({
       user_id: currentUser.id,
       full_name: fullName,
       brand_name: brandName,
       company_name: brandName,
-      marketplace: marketplace
+      marketplace
     });
-
     btn.disabled = false; btn.textContent = 'Weiter →';
     setStep(2);
   });
 
-  // STEP 2 back
+  // ── STEP 2 ──
   document.getElementById('step2-back').addEventListener('click', () => setStep(1));
 
-  // No seller ID checkbox
   document.getElementById('no-seller-id').addEventListener('change', function() {
     document.getElementById('seller-id').disabled = this.checked;
     document.getElementById('step2-next').textContent = this.checked ? 'Überspringen →' : 'Produkte laden →';
   });
 
-  // STEP 2 next - fetch products
   document.getElementById('step2-next').addEventListener('click', async () => {
     const noSellerId = document.getElementById('no-seller-id').checked;
-    const sellerId = document.getElementById('seller-id').value.trim();
+    const sellerId   = document.getElementById('seller-id').value.trim();
 
     if (noSellerId || !sellerId) {
-      // Skip to step 3
-      await sb.from('profiles').update({ onboarding_complete: true }).eq('user_id', currentUser.id);
-      buildSummary(0);
+      importedCount = 0;
       setStep(3);
+      loadVollmacht();
       return;
     }
 
-    // Save seller ID and fetch products
     await sb.from('profiles').update({ seller_id: sellerId }).eq('user_id', currentUser.id);
 
     const marketplace = document.getElementById('marketplace').value;
@@ -268,7 +296,6 @@
         { headers: { 'x-rapidapi-key': RAPID_KEY, 'x-rapidapi-host': RAPID_HOST } }
       );
       const json = await res.json();
-      console.log('API Response:', JSON.stringify(json));
       const products = json.data?.products || json.data?.seller_products || json.products || [];
       fetchedProducts = products;
 
@@ -280,7 +307,6 @@
         return;
       }
 
-      // Show found products
       document.getElementById('products-count').textContent = `✓ ${products.length} Produkt${products.length !== 1 ? 'e' : ''} gefunden`;
       document.getElementById('products-list').innerHTML = products.slice(0, 5).map(p => `
         <div class="product-item">
@@ -292,7 +318,6 @@
         </div>`).join('') + (products.length > 5 ? `<div style="font-size:0.78rem;color:#9ca3af;text-align:center;padding:8px;">+ ${products.length - 5} weitere Produkte</div>` : '');
 
       document.getElementById('products-result').style.display = 'block';
-
     } catch(e) {
       document.getElementById('loading-box').style.display = 'none';
       document.getElementById('step2-form').style.display = 'block';
@@ -300,7 +325,6 @@
     }
   });
 
-  // Confirm products
   document.getElementById('step2-confirm').addEventListener('click', async () => {
     const btn = document.getElementById('step2-confirm');
     btn.disabled = true; btn.textContent = 'Produkte werden gespeichert…';
@@ -314,31 +338,150 @@
       total_reviews: parseInt(String(p.product_num_ratings || '0').replace(/[.,]/g,'')) || 0,
       negative_reviews: 0,
       status: 'inactive'
-    })).filter(p => p.asin); // only valid ASINs
+    })).filter(p => p.asin);
 
     const { error } = await sb.from('products').insert(inserts);
     if (error) console.error('Insert error:', error);
 
-    await sb.from('profiles').update({ onboarding_complete: true }).eq('user_id', currentUser.id);
-    buildSummary(inserts.length);
+    importedCount = inserts.length;
     setStep(3);
+    loadVollmacht();
   });
 
-  document.getElementById('step2-skip').addEventListener('click', async () => {
-    await sb.from('profiles').update({ onboarding_complete: true }).eq('user_id', currentUser.id);
-    buildSummary(0);
+  document.getElementById('step2-skip').addEventListener('click', () => {
+    importedCount = 0;
     setStep(3);
+    loadVollmacht();
   });
 
-  function buildSummary(productCount) {
-    const name = document.getElementById('full-name').value;
+  // ── STEP 3: Vollmacht (PandaDoc) ──
+  async function loadVollmacht() {
+    const fullName  = document.getElementById('full-name').value.trim();
+    const brandName = document.getElementById('brand-name').value.trim();
+    const email     = currentUser.email;
+    const nameParts = fullName.split(' ');
+    const firstName = nameParts[0] || fullName;
+    const lastName  = nameParts.slice(1).join(' ') || '-';
+
+    const loadingEl = document.getElementById('vollmacht-loading');
+    const errorEl   = document.getElementById('vollmacht-error');
+    const wrapEl    = document.getElementById('vollmacht-wrap');
+
+    loadingEl.style.display = 'block';
+    errorEl.style.display   = 'none';
+    wrapEl.style.display    = 'none';
+
+    try {
+      // 1. Create document from template
+      const createRes = await fetch('https://api.pandadoc.com/public/v1/documents', {
+        method: 'POST',
+        headers: {
+          'Authorization': 'API-Key ' + PANDADOC_KEY,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          name: `Vollmacht – ${brandName}`,
+          template_uuid: PANDADOC_TEMPLATE,
+          recipients: [{
+            email,
+            first_name: firstName,
+            last_name: lastName,
+            role: 'Client'
+          }],
+          tokens: [
+            { name: 'company_name', value: brandName },
+            { name: 'full_name',    value: fullName }
+          ]
+        })
+      });
+      const doc = await createRes.json();
+      if (!doc.id) throw new Error('Dokument konnte nicht erstellt werden: ' + JSON.stringify(doc));
+
+      // 2. Send document (required before creating session)
+      await fetch(`https://api.pandadoc.com/public/v1/documents/${doc.id}/send`, {
+        method: 'POST',
+        headers: {
+          'Authorization': 'API-Key ' + PANDADOC_KEY,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          silent: true,
+          subject: 'Vollmacht ReviewGuards',
+          message: 'Bitte unterzeichne die Vollmacht für ReviewGuards.'
+        })
+      });
+
+      // 3. Poll until document is ready to sign
+      let ready = false;
+      for (let i = 0; i < 15; i++) {
+        await new Promise(r => setTimeout(r, 1500));
+        const statusRes = await fetch(`https://api.pandadoc.com/public/v1/documents/${doc.id}`, {
+          headers: { 'Authorization': 'API-Key ' + PANDADOC_KEY }
+        });
+        const statusData = await statusRes.json();
+        if (['document.sent', 'document.waiting_approval', 'document.draft'].includes(statusData.status)) {
+          ready = true;
+          break;
+        }
+      }
+      if (!ready) throw new Error('Vollmacht konnte nicht vorbereitet werden. Bitte Seite neu laden.');
+
+      // 4. Create embedded signing session
+      const sessionRes = await fetch(`https://api.pandadoc.com/public/v1/documents/${doc.id}/session`, {
+        method: 'POST',
+        headers: {
+          'Authorization': 'API-Key ' + PANDADOC_KEY,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ recipient: email, lifetime: 3600 })
+      });
+      const session = await sessionRes.json();
+      if (!session.id) throw new Error('Signing-Session konnte nicht erstellt werden: ' + JSON.stringify(session));
+
+      // 5. Show iframe
+      loadingEl.style.display = 'none';
+      document.getElementById('vollmacht-iframe').src = `https://app.pandadoc.com/s/${session.id}`;
+      wrapEl.style.display = 'block';
+
+      // 6. Listen for signing completion
+      window.addEventListener('message', function handler(e) {
+        if (e.data && (e.data.event === 'session_view.document.completed' || e.data.type === 'session_view.document.completed')) {
+          document.getElementById('signed-badge').classList.add('visible');
+          document.getElementById('step3-next').disabled = false;
+          window.removeEventListener('message', handler);
+        }
+      });
+
+    } catch(e) {
+      loadingEl.style.display = 'none';
+      errorEl.textContent = 'Fehler: ' + e.message;
+      errorEl.style.display = 'block';
+    }
+  }
+
+  document.getElementById('step3-next').addEventListener('click', async () => {
+    await sb.from('profiles').update({ onboarding_complete: true }).eq('user_id', currentUser.id);
+    buildSummary(importedCount, true);
+    setStep(4);
+  });
+
+  document.getElementById('step3-skip').addEventListener('click', async () => {
+    await sb.from('profiles').update({ onboarding_complete: true }).eq('user_id', currentUser.id);
+    buildSummary(importedCount, false);
+    setStep(4);
+  });
+
+  // ── STEP 4: Done ──
+  function buildSummary(productCount, signed) {
+    const name  = document.getElementById('full-name').value;
     const brand = document.getElementById('brand-name').value;
-    const mp = document.getElementById('marketplace').options[document.getElementById('marketplace').selectedIndex].text;
+    const mp    = document.getElementById('marketplace').options[document.getElementById('marketplace').selectedIndex].text;
     document.getElementById('summary-list').innerHTML = `
       <li><span class="check-icon">✓</span> Name: <strong style="margin-left:4px;">${name}</strong></li>
       <li><span class="check-icon">✓</span> Marke: <strong style="margin-left:4px;">${brand}</strong></li>
       <li><span class="check-icon">✓</span> Marktplatz: <strong style="margin-left:4px;">${mp}</strong></li>
-      <li><span class="check-icon">✓</span> Produkte importiert: <strong style="margin-left:4px;">${productCount}</strong></li>`;
+      <li><span class="check-icon">✓</span> Produkte importiert: <strong style="margin-left:4px;">${productCount}</strong></li>
+      <li><span class="check-icon" style="${signed ? '' : 'background:#fef3c7;color:#d97706;'}">${signed ? '✓' : '!'}</span> Vollmacht: <strong style="margin-left:4px;">${signed ? 'Unterzeichnet' : 'Ausstehend'}</strong></li>`;
   }
 
   document.getElementById('go-dashboard').addEventListener('click', () => location.href = 'dashboard.html');
