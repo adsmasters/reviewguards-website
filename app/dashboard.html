@@ -403,7 +403,7 @@
       activateHintShown = true;
     }
     await toggleStatus(id, 'active');
-    showToast('Aktiviert – analysiere Bewertungen…');
+    showToast('Analyse läuft – bis zu 100 Bewertungen werden geprüft. Dies kann 1–2 Minuten dauern…');
     try {
       let reviews = [];
       for (let page = 1; page <= 10; page++) {
@@ -447,10 +447,10 @@
           showToast('Fehler beim Speichern: ' + insertError.message, 'error');
           return;
         }
-        showToast(`${flagged.length} verdächtige Bewertungen gefunden → Offene Fälle`, 'success');
+        showToast(`✓ Analyse abgeschlossen: ${flagged.length} verdächtige Bewertung${flagged.length !== 1 ? 'en' : ''} von ${reviews.length} geprüften gefunden → Offene Fälle`, 'success');
         loadCasesBadge();
       } else {
-        showToast('Keine verdächtigen Bewertungen gefunden', 'success');
+        showToast(`✓ Analyse abgeschlossen: ${reviews.length} Bewertungen geprüft – keine Auffälligkeiten gefunden.`, 'success');
       }
     } catch(e) {
       console.error(e);
