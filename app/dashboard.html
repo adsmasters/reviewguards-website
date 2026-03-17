@@ -439,7 +439,14 @@
           reasons: r.reasons,
           status: 'pending'
         }));
-        await sb.from('cases').insert(cases);
+        console.log('Flagged reviews:', flagged.length, 'Product ID:', id, 'User ID:', currentUser.id);
+        console.log('Cases to insert:', JSON.stringify(cases, null, 2));
+        const { error: insertError } = await sb.from('cases').insert(cases);
+        if (insertError) {
+          console.error('Cases insert error:', insertError);
+          showToast('Fehler beim Speichern: ' + insertError.message, 'error');
+          return;
+        }
         showToast(`${flagged.length} verdächtige Bewertungen gefunden → Offene Fälle`, 'success');
         loadCasesBadge();
       } else {
