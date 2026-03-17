@@ -185,6 +185,7 @@
             <th>Status</th>
             <th>Ausgestellt am</th>
             <th>Fällig am</th>
+            <th></th>
           </tr>
         </thead>
         <tbody id="invoices-tbody">
@@ -266,7 +267,7 @@
 
     const tbody = document.getElementById('invoices-tbody');
     if (invoices.length === 0) {
-      tbody.innerHTML = `<tr><td colspan="5"><div class="empty-state"><div class="empty-icon">🧾</div><div class="empty-title">Keine Rechnungen vorhanden</div><div class="empty-sub">Rechnungen erscheinen hier sobald Bewertungen erfolgreich entfernt wurden.</div></div></td></tr>`;
+      tbody.innerHTML = `<tr><td colspan="6"><div class="empty-state"><div class="empty-icon">🧾</div><div class="empty-title">Keine Rechnungen vorhanden</div><div class="empty-sub">Rechnungen erscheinen hier sobald Bewertungen erfolgreich entfernt wurden.</div></div></td></tr>`;
       return;
     }
 
@@ -279,6 +280,10 @@
       else if (isOverdue) badge = '<span class="badge-overdue">Überfällig</span>';
       else badge = '<span class="badge-open">Offen</span>';
 
+      const payAction = inv.status !== 'bezahlt' && inv.stripe_invoice_url
+        ? `<a href="${inv.stripe_invoice_url}" target="_blank" style="display:inline-block;padding:6px 14px;background:#3551FF;color:#fff;border-radius:8px;font-size:0.78rem;font-weight:700;text-decoration:none;">Bezahlen</a>`
+        : inv.status === 'bezahlt' ? '<span style="color:#16a34a;font-size:0.78rem;">✓</span>' : '';
+
       return `
         <tr>
           <td><span class="invoice-num">${inv.invoice_number || 'RG-' + inv.id.substring(0,6).toUpperCase()}</span></td>
@@ -286,6 +291,7 @@
           <td>${badge}</td>
           <td style="color:#6b7280;">${new Date(inv.created_at).toLocaleDateString('de-DE')}</td>
           <td style="color:#6b7280;">${due ? due.toLocaleDateString('de-DE') : '–'}</td>
+          <td>${payAction}</td>
         </tr>`;
     }).join('');
   }

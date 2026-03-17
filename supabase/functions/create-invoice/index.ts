@@ -120,6 +120,7 @@ serve(async (req) => {
       invoice_number: finalized.number || finalized.id,
       amount: (quantity * PRICE_PER_REVIEW) / 100,
       status: "offen",
+      stripe_invoice_url: finalized.hosted_invoice_url || "",
       created_at: new Date().toISOString(),
       due_date: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString(),
     });
