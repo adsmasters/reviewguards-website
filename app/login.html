@@ -61,7 +61,11 @@
   const { createClient } = window.supabase;
   const sb = createClient('https://lgrnmiszhhahfcmctmwo.supabase.co', 'sb_publishable_E5tO2TvBrU8f1s5djnVOOQ_vk1djyAI');
 
-  sb.auth.getSession().then(({ data: { session } }) => { if (session) location.href = 'dashboard.html'; });
+  sb.auth.getSession().then(async ({ data: { session } }) => {
+    if (!session) return;
+    const { data: profile } = await sb.from('profiles').select('onboarding_complete').eq('user_id', session.user.id).single();
+    location.href = (!profile || !profile.onboarding_complete) ? 'onboarding.html' : 'dashboard.html';
+  });
 
   document.querySelectorAll('.tab').forEach(t => t.addEventListener('click', () => {
     document.querySelectorAll('.tab').forEach(x => x.classList.remove('active'));
