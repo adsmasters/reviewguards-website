@@ -2,7 +2,8 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 
 const RESEND_KEY = Deno.env.get("RESEND_API_KEY") || "";
 const NOTIFY_EMAIL = "team@reviewguards.de";
-const FROM_EMAIL = "ReviewGuards <noreply@reviewguards.de>";
+// TODO: Nach Domain-Verifizierung ändern auf: "ReviewGuards <noreply@reviewguards.de>"
+const FROM_EMAIL = "ReviewGuards <onboarding@resend.dev>";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
