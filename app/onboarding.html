@@ -177,7 +177,7 @@
     <div id="vollmacht-error" class="msg error"></div>
 
     <div id="vollmacht-wrap" style="display:none;">
-      <iframe id="vollmacht-iframe" class="vollmacht-frame" src="" allowfullscreen></iframe>
+      <div id="vollmacht-form-container"></div>
       <div class="signed-badge" id="signed-badge">✓ Vollmacht erfolgreich unterzeichnet!</div>
       <div class="btn-row">
         <button class="btn-next" id="step3-next" disabled>Weiter →</button>
@@ -199,6 +199,7 @@
   </div>
 </div>
 
+<script src="https://cdn.docuseal.com/js/form.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
 <script>
   const { createClient } = window.supabase;
@@ -354,7 +355,7 @@
     loadVollmacht();
   });
 
-  // ── STEP 3: Vollmacht (DocuSeal) ──
+  // ── STEP 3: Vollmacht (DocuSeal Embed Widget) ──
   async function loadVollmacht() {
     const fullName  = document.getElementById('full-name').value.trim();
     const brandName = document.getElementById('brand-name').value.trim();
@@ -363,59 +364,30 @@
     const loadingEl = document.getElementById('vollmacht-loading');
     const errorEl   = document.getElementById('vollmacht-error');
     const wrapEl    = document.getElementById('vollmacht-wrap');
+    const container = document.getElementById('vollmacht-form-container');
 
-    loadingEl.style.display = 'block';
+    loadingEl.style.display = 'none';
     errorEl.style.display   = 'none';
-    wrapEl.style.display    = 'none';
+    wrapEl.style.display    = 'block';
 
-    try {
-      // 1. Create submission from template
-      const res = await fetch('https://api.docuseal.eu/api/submissions', {
-        method: 'POST',
-        headers: {
-          'X-Auth-Token': DOCUSEAL_KEY,
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          template_id: DOCUSEAL_TEMPLATE,
-          send_email: false,
-          submitters: [{
-            name: fullName,
-            email: email,
-            role: 'Erste Partei',
-            fields: [
-              { name: 'company.name', default_value: brandName }
-            ]
-          }]
-        })
-      });
-      const data = await res.json();
-      if (data.error) throw new Error(data.error);
+    // Create DocuSeal embedded form widget
+    container.innerHTML = '';
+    const form = document.createElement('docuseal-form');
+    form.setAttribute('data-src', 'https://docuseal.eu/d/UhqPfUgF5s39Ji');
+    form.setAttribute('data-email', email);
+    form.setAttribute('data-name', fullName);
+    form.setAttribute('data-language', 'de');
+    form.setAttribute('data-fields', JSON.stringify([
+      { name: 'company.name', default_value: brandName }
+    ]));
+    form.id = 'docuseal-vollmacht';
+    container.appendChild(form);
 
-      // 2. Get the signing slug from the first submitter
-      const submitters = data;
-      const submitter = Array.isArray(submitters) ? submitters[0] : null;
-      if (!submitter || !submitter.slug) throw new Error('Signing-URL konnte nicht erstellt werden: ' + JSON.stringify(data));
-
-      // 3. Show embedded signing form
-      loadingEl.style.display = 'none';
-      document.getElementById('vollmacht-iframe').src = `https://docuseal.eu/s/${submitter.slug}`;
-      wrapEl.style.display = 'block';
-
-      // 4. Listen for signing completion via postMessage
-      window.addEventListener('message', function handler(e) {
-        if (e.data && (e.data.type === 'completed' || e.data.status === 'completed' || (typeof e.data === 'string' && e.data.includes('completed')))) {
-          document.getElementById('signed-badge').classList.add('visible');
-          document.getElementById('step3-next').disabled = false;
-          window.removeEventListener('message', handler);
-        }
-      });
-
-    } catch(e) {
-      loadingEl.style.display = 'none';
-      errorEl.textContent = 'Fehler: ' + e.message;
-      errorEl.style.display = 'block';
-    }
+    // Listen for signing completion
+    form.addEventListener('completed', () => {
+      document.getElementById('signed-badge').classList.add('visible');
+      document.getElementById('step3-next').disabled = false;
+    });
   }
 
   document.getElementById('step3-next').addEventListener('click', async () => {
