@@ -239,7 +239,7 @@
     loadInvoices();
   }
 
-  const STRIPE_PAYMENT_URL = 'https://buy.stripe.com/test_cNi3cw9NG6sg6OT5c35J600';
+  const EDGE_FN_URL = 'https://lgrnmiszhhahfcmctmwo.supabase.co/functions/v1/create-invoice';
 
   async function loadInvoices() {
     // Count unbilled removed reviews
@@ -249,7 +249,6 @@
     const payBtn = document.getElementById('pay-now-btn');
     if (unbilledCount > 0) {
       payBtn.style.display = 'inline-flex';
-      payBtn.href = STRIPE_PAYMENT_URL + '?prefilled_email=' + encodeURIComponent(currentUser.email);
     } else {
       payBtn.style.display = 'none';
       document.getElementById('payment-status-text').innerHTML = 'Keine offenen Zahlungen vorhanden.';
@@ -291,11 +290,46 @@
     }).join('');
   }
 
-  // Payment button opens Stripe Checkout
-  const addPayBtn = document.getElementById('add-payment-btn');
-  if (addPayBtn) addPayBtn.addEventListener('click', () => {
-    const payBtn = document.getElementById('pay-now-btn');
-    if (payBtn && payBtn.href !== '#') window.open(payBtn.href, '_blank');
+  // Create Stripe invoice via Edge Function
+  document.getElementById('pay-now-btn').addEventListener('click', async (e) => {
+    e.preventDefault();
+    const btn = document.getElementById('pay-now-btn');
+    btn.textContent = 'Rechnung wird erstellt…';
+    btn.style.pointerEvents = 'none';
+
+    try {
+      const { data: { session } } = await sb.auth.getSession();
+      const res = await fetch(EDGE_FN_URL, {
+        method: 'POST',
+        headers: {
+          'Authorization': 'Bearer ' + session.access_token,
+          'Content-Type': 'application/json'
+        }
+      });
+      const result = await res.json();
+
+      if (result.error) {
+        alert('Fehler: ' + result.error);
+        btn.textContent = 'Jetzt bezahlen →';
+        btn.style.pointerEvents = '';
+        return;
+      }
+
+      // Open Stripe hosted invoice page for payment
+      if (result.invoice_url) {
+        window.open(result.invoice_url, '_blank');
+      }
+      alert(`Rechnung ${result.invoice_number} über €${result.amount} wurde erstellt und per E-Mail verschickt.`);
+
+      // Reload page to show updated data
+      loadInvoices();
+      btn.textContent = 'Jetzt bezahlen →';
+      btn.style.pointerEvents = '';
+    } catch(e) {
+      alert('Fehler: ' + e.message);
+      btn.textContent = 'Jetzt bezahlen →';
+      btn.style.pointerEvents = '';
+    }
   });
 
   document.getElementById('logout-btn').addEventListener('click', async () => {
