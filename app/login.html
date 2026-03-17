@@ -116,7 +116,7 @@
     if (pass.length < 8) { showMsg('Passwort muss mind. 8 Zeichen lang sein', 'error'); return; }
     const btn = document.getElementById('reg-btn');
     btn.disabled = true; btn.textContent = 'Erstelle Konto…';
-    const { data, error } = await sb.auth.signUp({ email, password: pass, options: { data: { company_name: company } } });
+    const { data, error } = await sb.auth.signUp({ email, password: pass, options: { data: { company_name: company }, emailRedirectTo: window.location.origin + '/app/login.html' } });
     if (error) { showMsg('Fehler: ' + error.message, 'error'); btn.disabled = false; btn.textContent = 'Konto erstellen'; return; }
     // Supabase gibt bei bereits vorhandener Email keinen Fehler zurück,
     // aber der User hat keine Session und keine neue identities
