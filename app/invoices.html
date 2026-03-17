@@ -154,11 +154,11 @@
       <div class="payment-info-left">
         <div class="payment-icon">💳</div>
         <div>
-          <div class="payment-title">Zahlungsmethode</div>
-          <div class="payment-sub" id="payment-status-text">Noch keine Zahlungsmethode hinterlegt. Du wirst nur bei Erfolg belastet.</div>
+          <div class="payment-title">Offene Bewertungen bezahlen</div>
+          <div class="payment-sub" id="payment-status-text">Du hast <strong id="unbilled-count">0</strong> unbezahlte entfernte Bewertungen (je €129 zzgl. MwSt.)</div>
         </div>
       </div>
-      <button class="btn-outline" id="edit-payment-btn">Bearbeiten</button>
+      <a href="#" class="btn-add-payment" id="pay-now-btn" style="display:none;">Jetzt bezahlen →</a>
     </div>
 
     <div class="stats-row">
@@ -239,7 +239,22 @@
     loadInvoices();
   }
 
+  const STRIPE_PAYMENT_URL = 'https://buy.stripe.com/test_cNi3cw9NG6sg6OT5c35J600';
+
   async function loadInvoices() {
+    // Count unbilled removed reviews
+    const { data: unbilled } = await sb.from('removed_reviews').select('id').eq('user_id', currentUser.id).eq('billed', false);
+    const unbilledCount = unbilled?.length || 0;
+    document.getElementById('unbilled-count').textContent = unbilledCount;
+    const payBtn = document.getElementById('pay-now-btn');
+    if (unbilledCount > 0) {
+      payBtn.style.display = 'inline-flex';
+      payBtn.href = STRIPE_PAYMENT_URL + '?prefilled_email=' + encodeURIComponent(currentUser.email);
+    } else {
+      payBtn.style.display = 'none';
+      document.getElementById('payment-status-text').innerHTML = 'Keine offenen Zahlungen vorhanden.';
+    }
+
     const { data } = await sb.from('invoices').select('*').eq('user_id', currentUser.id).order('created_at', { ascending: false });
     const invoices = data || [];
 
@@ -276,19 +291,11 @@
     }).join('');
   }
 
-  // Payment modal
-  document.getElementById('add-payment-btn').addEventListener('click', () => document.getElementById('payment-modal').classList.add('open'));
-  document.getElementById('edit-payment-btn').addEventListener('click', () => document.getElementById('payment-modal').classList.add('open'));
-  document.getElementById('modal-cancel').addEventListener('click', () => document.getElementById('payment-modal').classList.remove('open'));
-  document.getElementById('payment-modal').addEventListener('click', e => {
-    if (e.target === document.getElementById('payment-modal')) document.getElementById('payment-modal').classList.remove('open');
-  });
-  document.getElementById('modal-confirm').addEventListener('click', () => {
-    const iban = document.getElementById('iban-input').value.trim();
-    const name = document.getElementById('account-name-input').value.trim();
-    if (!iban || !name) return;
-    document.getElementById('payment-status-text').textContent = `SEPA: ${iban.substring(0,4)}…${iban.slice(-4)} · ${name}`;
-    document.getElementById('payment-modal').classList.remove('open');
+  // Payment button opens Stripe Checkout
+  const addPayBtn = document.getElementById('add-payment-btn');
+  if (addPayBtn) addPayBtn.addEventListener('click', () => {
+    const payBtn = document.getElementById('pay-now-btn');
+    if (payBtn && payBtn.href !== '#') window.open(payBtn.href, '_blank');
   });
 
   document.getElementById('logout-btn').addEventListener('click', async () => {
