@@ -411,6 +411,14 @@
         reviews = reviews.concat(pageReviews);
         if (pageReviews.length === 0) break;
       }
+      // Deduplizierung
+      const seen = new Set();
+      reviews = reviews.filter(r => {
+        const key = r.review_id || r.review_title + r.review_comment;
+        if (seen.has(key)) return false;
+        seen.add(key);
+        return true;
+      });
       const flagged = analyzeReviews(reviews);
 
       if (flagged.length > 0) {

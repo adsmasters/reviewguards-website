@@ -1064,7 +1064,14 @@
         allReviews = allReviews.concat(pageReviews);
         if (pageReviews.length === 0) break; // no more pages
       }
-      const reviews = allReviews;
+      // Deduplizierung: gleiche Reviews über mehrere Seiten entfernen
+      const seen = new Set();
+      const reviews = allReviews.filter(r => {
+        const key = r.review_id || r.review_title + r.review_comment;
+        if (seen.has(key)) return false;
+        seen.add(key);
+        return true;
+      });
 
       setLoadingStep(3);
 
