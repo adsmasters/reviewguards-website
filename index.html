@@ -3491,18 +3491,15 @@
 
     if (!valid) return;
 
-    // Send via Formspree (replace YOUR_FORM_ID with actual Formspree endpoint)
     submitBtn.disabled = true;
     submitBtn.textContent = 'Wird gesendet...';
 
-    const formData = new FormData(form);
-    formData.append('_replyto', email);
-    formData.append('_subject', 'Neue Bewertungsanalyse-Anfrage: ' + marketplace);
+    const message = document.getElementById('message') ? document.getElementById('message').value.trim() : '';
 
-    fetch('https://formspree.io/f/xgvewjlq', {
+    fetch('https://lgrnmiszhhahfcmctmwo.supabase.co/functions/v1/contact-form', {
       method: 'POST',
-      body: formData,
-      headers: { 'Accept': 'application/json' }
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name, email, marketplace, review_link: reviewLink, message })
     })
     .then(res => {
       if (res.ok) {
@@ -3513,7 +3510,6 @@
       }
     })
     .catch(() => {
-      // Fallback: show success anyway (form data would need backend)
       form.style.display = 'none';
       formSuccess.style.display = 'block';
     });
