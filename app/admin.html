@@ -252,6 +252,9 @@
       <svg width="15" height="15" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
       <input class="search-input" id="search-input" type="text" placeholder="Kundenname oder ASIN suchen...">
     </div>
+    <select class="filter-select" id="customer-filter">
+      <option value="all">Kunde: Alle</option>
+    </select>
     <select class="filter-select" id="status-filter">
       <option value="all">Status: Alle</option>
       <option value="pending">Ausstehend</option>
@@ -260,6 +263,8 @@
       <option value="removed">Entfernt</option>
       <option value="declined">Abgelehnt</option>
     </select>
+    <input type="date" class="filter-select" id="date-from" title="Von Datum" style="width:auto;">
+    <input type="date" class="filter-select" id="date-to" title="Bis Datum" style="width:auto;">
   </div>
 
   <!-- TABS -->
@@ -403,6 +408,13 @@
     document.getElementById('stat-progress').textContent = progress;
     document.getElementById('stat-removed').textContent = removed;
 
+    // Populate customer filter
+    const customerSelect = document.getElementById('customer-filter');
+    const currentVal = customerSelect.value;
+    const customers = [...new Set(allCases.map(c => c.company_name || c.user_id).filter(Boolean))].sort();
+    customerSelect.innerHTML = '<option value="all">Kunde: Alle (' + customers.length + ')</option>' +
+      customers.map(name => '<option value="' + name + '"' + (name === currentVal ? ' selected' : '') + '>' + name + '</option>').join('');
+
     // Tab counts
     document.getElementById('tab-all-count').textContent = total;
     document.getElementById('tab-pending-count').textContent = allCases.filter(c => c.status === 'pending').length;
@@ -414,15 +426,22 @@
   function renderCases() {
     const search = document.getElementById('search-input').value.toLowerCase().trim();
     const statusFilter = document.getElementById('status-filter').value;
+    const customerFilter = document.getElementById('customer-filter').value;
+    const dateFrom = document.getElementById('date-from').value;
+    const dateTo = document.getElementById('date-to').value;
 
     let filtered = allCases.filter(c => {
       const matchTab = activeTab === 'all' || c.status === activeTab;
       const matchStatus = statusFilter === 'all' || c.status === statusFilter;
+      const matchCustomer = customerFilter === 'all' || (c.company_name || c.user_id) === customerFilter;
       const matchSearch = !search
         || (c.company_name || '').toLowerCase().includes(search)
         || (c.asin || '').toLowerCase().includes(search)
         || (c.review_title || '').toLowerCase().includes(search);
-      return matchTab && matchStatus && matchSearch;
+      const caseDate = c.created_at ? c.created_at.substring(0, 10) : '';
+      const matchDateFrom = !dateFrom || caseDate >= dateFrom;
+      const matchDateTo = !dateTo || caseDate <= dateTo;
+      return matchTab && matchStatus && matchCustomer && matchSearch && matchDateFrom && matchDateTo;
     });
 
     document.getElementById('results-count').textContent = filtered.length + ' Ergebnis' + (filtered.length !== 1 ? 'se' : '');
@@ -568,6 +587,9 @@
 
   document.getElementById('search-input').addEventListener('input', renderCases);
   document.getElementById('status-filter').addEventListener('change', renderCases);
+  document.getElementById('customer-filter').addEventListener('change', renderCases);
+  document.getElementById('date-from').addEventListener('change', renderCases);
+  document.getElementById('date-to').addEventListener('change', renderCases);
 
   // =================== HELPERS ===================
   function escHtml(str) {
