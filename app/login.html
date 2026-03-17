@@ -92,17 +92,27 @@
     const email   = document.getElementById('r-email').value.trim();
     const pass    = document.getElementById('r-pass').value;
     if (!company || !email || !pass) { showMsg('Bitte alle Felder ausfüllen', 'error'); return; }
+    // E-Mail-Format prüfen
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) { showMsg('Bitte eine gültige E-Mail-Adresse eingeben', 'error'); return; }
     if (pass.length < 8) { showMsg('Passwort muss mind. 8 Zeichen lang sein', 'error'); return; }
     const btn = document.getElementById('reg-btn');
     btn.disabled = true; btn.textContent = 'Erstelle Konto…';
     const { data, error } = await sb.auth.signUp({ email, password: pass, options: { data: { company_name: company } } });
     if (error) { showMsg('Fehler: ' + error.message, 'error'); btn.disabled = false; btn.textContent = 'Konto erstellen'; return; }
+    // Supabase gibt bei bereits vorhandener Email keinen Fehler zurück,
+    // aber der User hat keine Session und keine neue identities
+    if (data.user && data.user.identities && data.user.identities.length === 0) {
+      showMsg('Diese E-Mail-Adresse ist bereits registriert. Bitte melde dich an oder verwende eine andere E-Mail.', 'error');
+      btn.disabled = false; btn.textContent = 'Konto erstellen';
+      return;
+    }
     if (data.user) {
       await sb.from('profiles').upsert({ user_id: data.user.id, company_name: company });
       const { data: { session: s } } = await sb.auth.getSession();
       if (s) { location.href = 'onboarding.html'; return; }
     }
-    showMsg('Konto erstellt! Bitte E-Mail bestätigen, dann anmelden.', 'success');
+    showMsg('Konto erstellt! Bitte bestätige deine E-Mail-Adresse, dann melde dich an.', 'success');
     btn.disabled = false; btn.textContent = 'Konto erstellen';
   });
 
