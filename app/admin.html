@@ -1,0 +1,570 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <link rel="icon" type="image/svg+xml" href="../favicon.svg">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin – ReviewGuards</title>
+  <!--
+  =====================================================================
+  SQL: Erstelle diese Funktionen in Supabase (SQL Editor), damit der
+  Admin alle Daten trotz RLS lesen und bearbeiten kann.
+  =====================================================================
+
+  -- 1) Alle Fälle mit Produkt- und Profildaten laden
+  CREATE OR REPLACE FUNCTION get_all_cases()
+  RETURNS TABLE (
+    id uuid,
+    user_id uuid,
+    product_id uuid,
+    review_title text,
+    review_text text,
+    review_author text,
+    review_rating int,
+    reasons text[],
+    status text,
+    created_at timestamptz,
+    asin text,
+    product_name text,
+    company_name text
+  )
+  LANGUAGE sql
+  SECURITY DEFINER
+  AS $$
+    SELECT
+      c.id,
+      c.user_id,
+      c.product_id,
+      c.review_title,
+      c.review_text,
+      c.review_author,
+      c.review_rating,
+      c.reasons,
+      c.status,
+      c.created_at,
+      p.asin,
+      p.name AS product_name,
+      pr.company_name
+    FROM cases c
+    LEFT JOIN products p ON p.id = c.product_id
+    LEFT JOIN profiles pr ON pr.user_id = c.user_id
+    ORDER BY c.created_at DESC;
+  $$;
+
+  -- 2) Status eines Falls aktualisieren
+  CREATE OR REPLACE FUNCTION update_case_status(p_case_id uuid, p_new_status text)
+  RETURNS void
+  LANGUAGE plpgsql
+  SECURITY DEFINER
+  AS $$
+  BEGIN
+    UPDATE cases SET status = p_new_status WHERE id = p_case_id;
+  END;
+  $$;
+
+  -- 3) Fall als entfernt markieren + in removed_reviews einfügen
+  CREATE OR REPLACE FUNCTION mark_case_removed(p_case_id uuid)
+  RETURNS void
+  LANGUAGE plpgsql
+  SECURITY DEFINER
+  AS $$
+  DECLARE
+    v_case cases%ROWTYPE;
+  BEGIN
+    SELECT * INTO v_case FROM cases WHERE id = p_case_id;
+    IF NOT FOUND THEN
+      RAISE EXCEPTION 'Case not found';
+    END IF;
+    UPDATE cases SET status = 'removed' WHERE id = p_case_id;
+    INSERT INTO removed_reviews (user_id, product_id, case_id, review_title, review_text, review_rating, removed_at, billed)
+    VALUES (v_case.user_id, v_case.product_id, p_case_id, v_case.review_title, v_case.review_text, v_case.review_rating, now(), false);
+  END;
+  $$;
+
+  =====================================================================
+  -->
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: Arial, Helvetica, sans-serif; background: #f5f6ff; color: #111; min-height: 100vh; }
+
+    /* TOP BAR */
+    .topbar { background: #0d1117; padding: 0 32px; height: 56px; display: flex; align-items: center; gap: 12px; position: sticky; top: 0; z-index: 100; }
+    .topbar-logo { display: flex; align-items: center; gap: 10px; }
+    .topbar-logo-icon { width: 32px; height: 32px; background: #3551FF; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-weight: 900; font-size: 0.75rem; color: #fff; flex-shrink: 0; }
+    .topbar-logo-text { font-weight: 900; font-size: 0.95rem; color: #fff; }
+    .topbar-logo-text span { color: #3551FF; }
+    .topbar-badge { padding: 3px 10px; background: rgba(53,81,255,0.2); color: #7b93ff; border-radius: 6px; font-size: 0.72rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; }
+    .topbar-spacer { flex: 1; }
+    .topbar-logout { background: none; border: 1px solid rgba(255,255,255,0.15); color: rgba(255,255,255,0.6); padding: 6px 14px; border-radius: 7px; font-size: 0.8rem; font-weight: 600; cursor: pointer; transition: all 0.15s; }
+    .topbar-logout:hover { border-color: rgba(255,255,255,0.3); color: #fff; }
+
+    /* CONTENT */
+    .content { padding: 32px; max-width: 1400px; margin: 0 auto; }
+    .page-title { font-size: 1.6rem; font-weight: 900; color: #111; letter-spacing: -0.02em; margin-bottom: 4px; }
+    .page-sub { font-size: 0.83rem; color: #6b7280; margin-bottom: 28px; }
+
+    /* STATS */
+    .stats-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 28px; }
+    .stat-card { background: #fff; border: 1px solid #e5e7eb; border-radius: 14px; padding: 20px 24px; }
+    .stat-label { font-size: 0.78rem; font-weight: 600; color: #9ca3af; text-transform: uppercase; letter-spacing: 0.04em; margin-bottom: 8px; }
+    .stat-value { font-size: 1.8rem; font-weight: 900; color: #111; letter-spacing: -0.02em; }
+    .stat-card.blue .stat-value { color: #3551FF; }
+    .stat-card.yellow .stat-value { color: #f59e0b; }
+    .stat-card.green .stat-value { color: #16a34a; }
+
+    /* TOOLBAR */
+    .toolbar { display: flex; align-items: center; gap: 12px; margin-bottom: 20px; flex-wrap: wrap; }
+    .search-wrap { position: relative; flex: 1; min-width: 220px; }
+    .search-wrap svg { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: #9ca3af; }
+    .search-input { width: 100%; padding: 9px 12px 9px 36px; border: 1.5px solid #e5e7eb; border-radius: 9px; font-size: 0.85rem; color: #111; outline: none; background: #fff; }
+    .search-input:focus { border-color: #3551FF; }
+    .filter-select { padding: 9px 12px; border: 1.5px solid #e5e7eb; border-radius: 9px; font-size: 0.83rem; color: #374151; background: #fff; outline: none; cursor: pointer; }
+
+    /* TAB ROW */
+    .tab-row { display: flex; gap: 0; border-bottom: 2px solid #e5e7eb; margin-bottom: 20px; }
+    .tab-btn { padding: 10px 16px; font-size: 0.85rem; font-weight: 600; color: #9ca3af; cursor: pointer; border-bottom: 2px solid transparent; margin-bottom: -2px; transition: all 0.15s; display: flex; align-items: center; gap: 6px; }
+    .tab-btn.active { color: #3551FF; border-bottom-color: #3551FF; }
+    .tab-count { background: #f3f4f6; color: #6b7280; font-size: 0.7rem; font-weight: 700; padding: 1px 7px; border-radius: 10px; }
+    .tab-btn.active .tab-count { background: #eff2ff; color: #3551FF; }
+
+    /* TABLE */
+    .table-wrap { background: #fff; border-radius: 14px; border: 1px solid #e5e7eb; overflow: hidden; }
+    .results-count { font-size: 0.8rem; color: #6b7280; padding: 12px 20px; border-bottom: 1px solid #f3f4f6; }
+    table { width: 100%; border-collapse: collapse; }
+    th { padding: 11px 16px; text-align: left; font-size: 0.73rem; font-weight: 700; color: #9ca3af; text-transform: uppercase; letter-spacing: 0.05em; border-bottom: 1px solid #f3f4f6; white-space: nowrap; }
+    td { padding: 12px 16px; border-bottom: 1px solid #f9fafb; font-size: 0.84rem; vertical-align: middle; }
+    tr:last-child td { border-bottom: none; }
+    tr:hover td { background: #f9fafb; }
+    .stars { color: #f59e0b; letter-spacing: 1px; font-size: 0.85rem; }
+    .stars .empty { color: #e5e7eb; }
+    .reason-tag { display: inline-block; padding: 2px 8px; background: #fee2e2; color: #dc2626; border-radius: 20px; font-size: 0.7rem; font-weight: 600; margin: 1px 3px 1px 0; }
+    .reasons-cell { max-width: 220px; }
+
+    /* STATUS BADGES */
+    .status-pending { padding: 4px 10px; background: #fef3c7; color: #d97706; border-radius: 20px; font-size: 0.73rem; font-weight: 600; white-space: nowrap; }
+    .status-approved { padding: 4px 10px; background: #dbeafe; color: #2563eb; border-radius: 20px; font-size: 0.73rem; font-weight: 600; white-space: nowrap; }
+    .status-in_progress { padding: 4px 10px; background: #dbeafe; color: #2563eb; border-radius: 20px; font-size: 0.73rem; font-weight: 600; white-space: nowrap; }
+    .status-removed { padding: 4px 10px; background: #dcfce7; color: #16a34a; border-radius: 20px; font-size: 0.73rem; font-weight: 600; white-space: nowrap; }
+    .status-declined { padding: 4px 10px; background: #f3f4f6; color: #6b7280; border-radius: 20px; font-size: 0.73rem; font-weight: 600; white-space: nowrap; }
+
+    /* ACTION BUTTONS */
+    .btn-sm { padding: 5px 12px; border: none; border-radius: 7px; font-size: 0.76rem; font-weight: 700; cursor: pointer; transition: filter 0.15s; white-space: nowrap; }
+    .btn-sm:hover { filter: brightness(1.08); }
+    .btn-progress { background: #3551FF; color: #fff; }
+    .btn-remove { background: #16a34a; color: #fff; }
+    .action-cell { display: flex; align-items: center; gap: 6px; }
+
+    /* EMPTY */
+    .empty-state { text-align: center; padding: 60px 20px; }
+    .empty-title { font-size: 0.95rem; font-weight: 600; color: #6b7280; margin-bottom: 6px; }
+    .empty-sub { font-size: 0.82rem; color: #9ca3af; }
+
+    /* LOGIN OVERLAY */
+    .login-overlay { position: fixed; inset: 0; background: #0d1117; z-index: 500; display: flex; align-items: center; justify-content: center; }
+    .login-overlay.hidden { display: none; }
+    .login-box { background: #fff; border-radius: 20px; padding: 40px; width: 100%; max-width: 400px; box-shadow: 0 20px 60px rgba(0,0,0,0.3); text-align: center; }
+    .login-logo { display: flex; align-items: center; gap: 10px; justify-content: center; margin-bottom: 28px; }
+    .login-logo-icon { width: 40px; height: 40px; background: #3551FF; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-weight: 900; font-size: 0.9rem; color: #fff; }
+    .login-logo-text { font-weight: 900; font-size: 1.15rem; color: #111; }
+    .login-logo-text span { color: #3551FF; }
+    .login-title { font-size: 1.1rem; font-weight: 800; color: #111; margin-bottom: 6px; }
+    .login-sub { font-size: 0.83rem; color: #6b7280; margin-bottom: 24px; }
+    .login-input { width: 100%; padding: 12px 16px; border: 1.5px solid #e5e7eb; border-radius: 10px; font-size: 0.92rem; color: #111; outline: none; margin-bottom: 16px; text-align: center; }
+    .login-input:focus { border-color: #3551FF; }
+    .login-btn { width: 100%; padding: 12px; background: #3551FF; color: #fff; border: none; border-radius: 10px; font-size: 0.92rem; font-weight: 700; cursor: pointer; transition: filter 0.15s; }
+    .login-btn:hover { filter: brightness(1.08); }
+    .login-error { color: #dc2626; font-size: 0.82rem; margin-bottom: 12px; display: none; }
+
+    /* TOAST */
+    .toast { position: fixed; bottom: 24px; right: 24px; background: #111; color: #fff; padding: 12px 20px; border-radius: 10px; font-size: 0.85rem; font-weight: 600; z-index: 600; transform: translateY(80px); opacity: 0; transition: all 0.3s; }
+    .toast.show { transform: translateY(0); opacity: 1; }
+    .toast.success { background: #16a34a; }
+    .toast.error { background: #dc2626; }
+
+    /* RESPONSIVE */
+    @media (max-width: 900px) {
+      .stats-row { grid-template-columns: repeat(2, 1fr); }
+      .content { padding: 20px; }
+    }
+    @media (max-width: 600px) {
+      .stats-row { grid-template-columns: 1fr; }
+      table { font-size: 0.78rem; }
+      td, th { padding: 8px 10px; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- LOGIN OVERLAY -->
+<div class="login-overlay" id="login-overlay">
+  <div class="login-box">
+    <div class="login-logo">
+      <div class="login-logo-icon">RG</div>
+      <div class="login-logo-text">Review<span>Guards</span></div>
+    </div>
+    <div class="login-title">Admin-Zugang</div>
+    <div class="login-sub">Bitte Admin-Passwort eingeben</div>
+    <div class="login-error" id="login-error">Falsches Passwort</div>
+    <input type="password" class="login-input" id="login-password" placeholder="Passwort" autofocus>
+    <button class="login-btn" id="login-btn">Anmelden</button>
+  </div>
+</div>
+
+<!-- TOP BAR -->
+<div class="topbar" id="topbar" style="display:none;">
+  <div class="topbar-logo">
+    <div class="topbar-logo-icon">RG</div>
+    <div class="topbar-logo-text">Review<span>Guards</span></div>
+  </div>
+  <span class="topbar-badge">Admin</span>
+  <div class="topbar-spacer"></div>
+  <button class="topbar-logout" id="logout-btn">Abmelden</button>
+</div>
+
+<!-- MAIN CONTENT -->
+<div class="content" id="main-content" style="display:none;">
+  <div class="page-title">Admin-Dashboard</div>
+  <div class="page-sub">Alle Kundenfälle verwalten und Statusänderungen vornehmen</div>
+
+  <!-- STATS -->
+  <div class="stats-row">
+    <div class="stat-card">
+      <div class="stat-label">Fälle gesamt</div>
+      <div class="stat-value" id="stat-total">-</div>
+    </div>
+    <div class="stat-card blue">
+      <div class="stat-label">Ausstehend</div>
+      <div class="stat-value" id="stat-pending">-</div>
+    </div>
+    <div class="stat-card yellow">
+      <div class="stat-label">In Bearbeitung</div>
+      <div class="stat-value" id="stat-progress">-</div>
+    </div>
+    <div class="stat-card green">
+      <div class="stat-label">Entfernt</div>
+      <div class="stat-value" id="stat-removed">-</div>
+    </div>
+  </div>
+
+  <!-- TOOLBAR -->
+  <div class="toolbar">
+    <div class="search-wrap">
+      <svg width="15" height="15" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
+      <input class="search-input" id="search-input" type="text" placeholder="Kundenname oder ASIN suchen...">
+    </div>
+    <select class="filter-select" id="status-filter">
+      <option value="all">Status: Alle</option>
+      <option value="pending">Ausstehend</option>
+      <option value="approved">Genehmigt</option>
+      <option value="in_progress">In Bearbeitung</option>
+      <option value="removed">Entfernt</option>
+      <option value="declined">Abgelehnt</option>
+    </select>
+  </div>
+
+  <!-- TABS -->
+  <div class="tab-row">
+    <div class="tab-btn active" data-tab="all">Alle <span class="tab-count" id="tab-all-count">0</span></div>
+    <div class="tab-btn" data-tab="pending">Ausstehend <span class="tab-count" id="tab-pending-count">0</span></div>
+    <div class="tab-btn" data-tab="approved">Genehmigt <span class="tab-count" id="tab-approved-count">0</span></div>
+    <div class="tab-btn" data-tab="in_progress">In Bearbeitung <span class="tab-count" id="tab-in_progress-count">0</span></div>
+    <div class="tab-btn" data-tab="removed">Entfernt <span class="tab-count" id="tab-removed-count">0</span></div>
+  </div>
+
+  <!-- TABLE -->
+  <div class="table-wrap">
+    <div class="results-count" id="results-count">Laden...</div>
+    <table>
+      <thead>
+        <tr>
+          <th>Kunde</th>
+          <th>ASIN</th>
+          <th>Bewertungstitel</th>
+          <th>Sterne</th>
+          <th>Gründe</th>
+          <th>Status</th>
+          <th>Erstellt am</th>
+          <th>Aktionen</th>
+        </tr>
+      </thead>
+      <tbody id="cases-tbody">
+        <tr><td colspan="8"><div class="empty-state"><div class="empty-title">Laden...</div></div></td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<script>
+  // =================== CONFIG ===================
+  const ADMIN_PASSWORD = 'ReviewGuards2026!';
+  const SUPABASE_URL = 'https://lgrnmiszhhahfcmctmwo.supabase.co';
+  const SUPABASE_KEY = 'sb_publishable_E5tO2TvBrU8f1s5djnVOOQ_vk1djyAI';
+
+  const { createClient } = window.supabase;
+  const sb = createClient(SUPABASE_URL, SUPABASE_KEY);
+
+  let allCases = [];
+  let activeTab = 'all';
+
+  // =================== LOGIN ===================
+  function checkSession() {
+    if (sessionStorage.getItem('rg_admin') === 'true') {
+      showDashboard();
+    }
+  }
+
+  document.getElementById('login-btn').addEventListener('click', attemptLogin);
+  document.getElementById('login-password').addEventListener('keydown', e => {
+    if (e.key === 'Enter') attemptLogin();
+  });
+
+  function attemptLogin() {
+    const pw = document.getElementById('login-password').value;
+    if (pw === ADMIN_PASSWORD) {
+      sessionStorage.setItem('rg_admin', 'true');
+      showDashboard();
+    } else {
+      const err = document.getElementById('login-error');
+      err.style.display = 'block';
+      document.getElementById('login-password').value = '';
+      document.getElementById('login-password').focus();
+    }
+  }
+
+  function showDashboard() {
+    document.getElementById('login-overlay').classList.add('hidden');
+    document.getElementById('topbar').style.display = 'flex';
+    document.getElementById('main-content').style.display = 'block';
+    loadCases();
+  }
+
+  document.getElementById('logout-btn').addEventListener('click', () => {
+    sessionStorage.removeItem('rg_admin');
+    location.reload();
+  });
+
+  // =================== DATA ===================
+  async function loadCases() {
+    // Try RPC first (if SQL functions exist), fallback to direct query
+    let data, error;
+    const rpc = await sb.rpc('get_all_cases');
+    if (!rpc.error && rpc.data) {
+      data = rpc.data;
+    } else {
+      // Fallback: direct queries with joins
+      const casesRes = await sb.from('cases').select('*').order('created_at', { ascending: false });
+      if (casesRes.error) {
+        showToast('Fehler beim Laden der Fälle: ' + casesRes.error.message, 'error');
+        return;
+      }
+      const cases = casesRes.data || [];
+
+      // Load products and profiles
+      const productIds = [...new Set(cases.map(c => c.product_id).filter(Boolean))];
+      const userIds = [...new Set(cases.map(c => c.user_id).filter(Boolean))];
+
+      let productsMap = {};
+      let profilesMap = {};
+
+      if (productIds.length > 0) {
+        const { data: products } = await sb.from('products').select('id, asin, name').in('id', productIds);
+        (products || []).forEach(p => productsMap[p.id] = p);
+      }
+
+      if (userIds.length > 0) {
+        const { data: profiles } = await sb.from('profiles').select('user_id, company_name').in('user_id', userIds);
+        (profiles || []).forEach(p => profilesMap[p.user_id] = p);
+      }
+
+      data = cases.map(c => ({
+        ...c,
+        asin: productsMap[c.product_id]?.asin || '-',
+        product_name: productsMap[c.product_id]?.name || '-',
+        company_name: profilesMap[c.user_id]?.company_name || '-'
+      }));
+    }
+
+    allCases = data || [];
+    updateStats();
+    renderCases();
+  }
+
+  function updateStats() {
+    const total = allCases.length;
+    const pending = allCases.filter(c => c.status === 'pending' || c.status === 'approved').length;
+    const progress = allCases.filter(c => c.status === 'in_progress').length;
+    const removed = allCases.filter(c => c.status === 'removed').length;
+
+    document.getElementById('stat-total').textContent = total;
+    document.getElementById('stat-pending').textContent = pending;
+    document.getElementById('stat-progress').textContent = progress;
+    document.getElementById('stat-removed').textContent = removed;
+
+    // Tab counts
+    document.getElementById('tab-all-count').textContent = total;
+    document.getElementById('tab-pending-count').textContent = allCases.filter(c => c.status === 'pending').length;
+    document.getElementById('tab-approved-count').textContent = allCases.filter(c => c.status === 'approved').length;
+    document.getElementById('tab-in_progress-count').textContent = progress;
+    document.getElementById('tab-removed-count').textContent = removed;
+  }
+
+  function renderCases() {
+    const search = document.getElementById('search-input').value.toLowerCase().trim();
+    const statusFilter = document.getElementById('status-filter').value;
+
+    let filtered = allCases.filter(c => {
+      const matchTab = activeTab === 'all' || c.status === activeTab;
+      const matchStatus = statusFilter === 'all' || c.status === statusFilter;
+      const matchSearch = !search
+        || (c.company_name || '').toLowerCase().includes(search)
+        || (c.asin || '').toLowerCase().includes(search)
+        || (c.review_title || '').toLowerCase().includes(search);
+      return matchTab && matchStatus && matchSearch;
+    });
+
+    document.getElementById('results-count').textContent = filtered.length + ' Ergebnis' + (filtered.length !== 1 ? 'se' : '');
+    const tbody = document.getElementById('cases-tbody');
+
+    if (filtered.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="8"><div class="empty-state"><div class="empty-title">Keine Fälle gefunden</div><div class="empty-sub">Passe die Filter an oder warte auf neue Fälle</div></div></td></tr>';
+      return;
+    }
+
+    tbody.innerHTML = filtered.map(c => {
+      const stars = renderStars(c.review_rating || 0);
+      const statusBadge = getStatusBadge(c.status);
+      const actions = getActions(c);
+      const reasons = (c.reasons || []).map(r => '<span class="reason-tag">' + escHtml(r) + '</span>').join('');
+      const date = new Date(c.created_at).toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric' });
+      const title = c.review_title ? (c.review_title.length > 40 ? escHtml(c.review_title.substring(0, 40)) + '...' : escHtml(c.review_title)) : '-';
+
+      return '<tr>' +
+        '<td><strong>' + escHtml(c.company_name || '-') + '</strong></td>' +
+        '<td style="font-family:monospace;font-size:0.8rem;">' + escHtml(c.asin || '-') + '</td>' +
+        '<td title="' + escAttr(c.review_title || '') + '">' + title + '</td>' +
+        '<td><span class="stars">' + stars + '</span></td>' +
+        '<td class="reasons-cell">' + (reasons || '-') + '</td>' +
+        '<td>' + statusBadge + '</td>' +
+        '<td style="white-space:nowrap;font-size:0.8rem;color:#6b7280;">' + date + '</td>' +
+        '<td><div class="action-cell">' + actions + '</div></td>' +
+        '</tr>';
+    }).join('');
+  }
+
+  function renderStars(rating) {
+    let html = '';
+    for (let i = 1; i <= 5; i++) {
+      html += '<span' + (i > rating ? ' class="empty"' : '') + '>&#9733;</span>';
+    }
+    return html;
+  }
+
+  function getStatusBadge(status) {
+    const labels = {
+      pending: 'Ausstehend',
+      approved: 'Genehmigt',
+      in_progress: 'In Bearbeitung',
+      removed: 'Entfernt',
+      declined: 'Abgelehnt'
+    };
+    return '<span class="status-' + status + '">' + (labels[status] || status) + '</span>';
+  }
+
+  function getActions(c) {
+    if (c.status === 'pending' || c.status === 'approved') {
+      return '<button class="btn-sm btn-progress" onclick="setCaseInProgress(\'' + c.id + '\')">In Bearbeitung</button>';
+    }
+    if (c.status === 'in_progress') {
+      return '<button class="btn-sm btn-remove" onclick="markCaseRemoved(\'' + c.id + '\')">Als entfernt markieren</button>';
+    }
+    if (c.status === 'removed') {
+      return '<span style="font-size:0.78rem;color:#16a34a;font-weight:600;">Erledigt</span>';
+    }
+    return '-';
+  }
+
+  // =================== ACTIONS ===================
+  async function setCaseInProgress(caseId) {
+    // Try RPC first, fallback to direct update
+    const rpc = await sb.rpc('update_case_status', { p_case_id: caseId, p_new_status: 'in_progress' });
+    if (rpc.error) {
+      const { error } = await sb.from('cases').update({ status: 'in_progress' }).eq('id', caseId);
+      if (error) { showToast('Fehler: ' + error.message, 'error'); return; }
+    }
+    // Update local data
+    allCases = allCases.map(c => c.id === caseId ? { ...c, status: 'in_progress' } : c);
+    updateStats();
+    renderCases();
+    showToast('Status auf "In Bearbeitung" gesetzt', 'success');
+  }
+
+  async function markCaseRemoved(caseId) {
+    if (!confirm('Diesen Fall als entfernt markieren? Die Bewertung wird in "Entfernte Bewertungen" übernommen.')) return;
+
+    // Try RPC first, fallback to manual
+    const rpc = await sb.rpc('mark_case_removed', { p_case_id: caseId });
+    if (rpc.error) {
+      // Fallback: do it manually
+      const c = allCases.find(x => x.id === caseId);
+      if (!c) { showToast('Fall nicht gefunden', 'error'); return; }
+
+      const { error: updateErr } = await sb.from('cases').update({ status: 'removed' }).eq('id', caseId);
+      if (updateErr) { showToast('Fehler: ' + updateErr.message, 'error'); return; }
+
+      const { error: insertErr } = await sb.from('removed_reviews').insert({
+        user_id: c.user_id,
+        product_id: c.product_id,
+        case_id: caseId,
+        review_title: c.review_title,
+        review_text: c.review_text,
+        review_rating: c.review_rating,
+        removed_at: new Date().toISOString(),
+        billed: false
+      });
+      if (insertErr) { showToast('Fehler beim Eintragen in entfernte Bewertungen: ' + insertErr.message, 'error'); return; }
+    }
+
+    // Update local data
+    allCases = allCases.map(c => c.id === caseId ? { ...c, status: 'removed' } : c);
+    updateStats();
+    renderCases();
+    showToast('Bewertung als entfernt markiert', 'success');
+  }
+
+  // =================== FILTERS ===================
+  document.querySelectorAll('.tab-btn').forEach(btn => btn.addEventListener('click', () => {
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    activeTab = btn.dataset.tab;
+    renderCases();
+  }));
+
+  document.getElementById('search-input').addEventListener('input', renderCases);
+  document.getElementById('status-filter').addEventListener('change', renderCases);
+
+  // =================== HELPERS ===================
+  function escHtml(str) {
+    const div = document.createElement('div');
+    div.textContent = str;
+    return div.innerHTML;
+  }
+
+  function escAttr(str) {
+    return str.replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  }
+
+  function showToast(msg, type) {
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.className = 'toast ' + (type || '') + ' show';
+    setTimeout(() => t.classList.remove('show'), 3500);
+  }
+
+  // =================== INIT ===================
+  checkSession();
+</script>
+</body>
+</html>
