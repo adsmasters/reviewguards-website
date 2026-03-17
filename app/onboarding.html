@@ -206,8 +206,8 @@
   const RAPID_KEY  = 'f8efc09e81msh6c57af2fcb726adp116390jsne4a9ac230e46';
   const RAPID_HOST = 'real-time-amazon-data.p.rapidapi.com';
   // NOTE: Move to server-side (Supabase Edge Function) before production
-  const PANDADOC_KEY      = '400ff1f3a967aec8734fcef82b9da12e9c46433e';
-  const PANDADOC_TEMPLATE = 'bZplaYDwKhobs7KB93BG';
+  const DOCUSEAL_KEY      = '8jdaAypofm4pSz2yXXDBpKoBa9BaSWe2NvtFZC6ZQct';
+  const DOCUSEAL_TEMPLATE = 455351;
 
   let currentUser = null;
   let fetchedProducts = [];
@@ -354,14 +354,11 @@
     loadVollmacht();
   });
 
-  // ── STEP 3: Vollmacht (PandaDoc) ──
+  // ── STEP 3: Vollmacht (DocuSeal) ──
   async function loadVollmacht() {
     const fullName  = document.getElementById('full-name').value.trim();
     const brandName = document.getElementById('brand-name').value.trim();
     const email     = currentUser.email;
-    const nameParts = fullName.split(' ');
-    const firstName = nameParts[0] || fullName;
-    const lastName  = nameParts.slice(1).join(' ') || '-';
 
     const loadingEl = document.getElementById('vollmacht-loading');
     const errorEl   = document.getElementById('vollmacht-error');
@@ -372,80 +369,42 @@
     wrapEl.style.display    = 'none';
 
     try {
-      // 1. Create document from template
-      const createRes = await fetch('https://api.pandadoc.com/public/v1/documents', {
+      // 1. Create submission from template
+      const res = await fetch('https://api.docuseal.eu/api/submissions', {
         method: 'POST',
         headers: {
-          'Authorization': 'API-Key ' + PANDADOC_KEY,
+          'X-Auth-Token': DOCUSEAL_KEY,
           'Content-Type': 'application/json'
         },
         body: JSON.stringify({
-          name: `Vollmacht – ${brandName}`,
-          template_uuid: PANDADOC_TEMPLATE,
-          recipients: [{
-            email,
-            first_name: firstName,
-            last_name: lastName,
-            role: 'Client'
-          }],
-          tokens: [
-            { name: 'company_name', value: brandName },
-            { name: 'full_name',    value: fullName }
-          ]
+          template_id: DOCUSEAL_TEMPLATE,
+          send_email: false,
+          submitters: [{
+            name: fullName,
+            email: email,
+            role: 'Erste Partei',
+            fields: [
+              { name: 'company.name', default_value: brandName }
+            ]
+          }]
         })
       });
-      const doc = await createRes.json();
-      if (!doc.id) throw new Error('Dokument konnte nicht erstellt werden: ' + JSON.stringify(doc));
+      const data = await res.json();
+      if (data.error) throw new Error(data.error);
 
-      // 2. Send document (required before creating session)
-      await fetch(`https://api.pandadoc.com/public/v1/documents/${doc.id}/send`, {
-        method: 'POST',
-        headers: {
-          'Authorization': 'API-Key ' + PANDADOC_KEY,
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          silent: true,
-          subject: 'Vollmacht ReviewGuards',
-          message: 'Bitte unterzeichne die Vollmacht für ReviewGuards.'
-        })
-      });
+      // 2. Get the signing slug from the first submitter
+      const submitters = data;
+      const submitter = Array.isArray(submitters) ? submitters[0] : null;
+      if (!submitter || !submitter.slug) throw new Error('Signing-URL konnte nicht erstellt werden: ' + JSON.stringify(data));
 
-      // 3. Poll until document is ready to sign
-      let ready = false;
-      for (let i = 0; i < 15; i++) {
-        await new Promise(r => setTimeout(r, 1500));
-        const statusRes = await fetch(`https://api.pandadoc.com/public/v1/documents/${doc.id}`, {
-          headers: { 'Authorization': 'API-Key ' + PANDADOC_KEY }
-        });
-        const statusData = await statusRes.json();
-        if (['document.sent', 'document.waiting_approval', 'document.draft'].includes(statusData.status)) {
-          ready = true;
-          break;
-        }
-      }
-      if (!ready) throw new Error('Vollmacht konnte nicht vorbereitet werden. Bitte Seite neu laden.');
-
-      // 4. Create embedded signing session
-      const sessionRes = await fetch(`https://api.pandadoc.com/public/v1/documents/${doc.id}/session`, {
-        method: 'POST',
-        headers: {
-          'Authorization': 'API-Key ' + PANDADOC_KEY,
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({ recipient: email, lifetime: 3600 })
-      });
-      const session = await sessionRes.json();
-      if (!session.id) throw new Error('Signing-Session konnte nicht erstellt werden: ' + JSON.stringify(session));
-
-      // 5. Show iframe
+      // 3. Show embedded signing form
       loadingEl.style.display = 'none';
-      document.getElementById('vollmacht-iframe').src = `https://app.pandadoc.com/s/${session.id}`;
+      document.getElementById('vollmacht-iframe').src = `https://docuseal.eu/s/${submitter.slug}`;
       wrapEl.style.display = 'block';
 
-      // 6. Listen for signing completion
+      // 4. Listen for signing completion via postMessage
       window.addEventListener('message', function handler(e) {
-        if (e.data && (e.data.event === 'session_view.document.completed' || e.data.type === 'session_view.document.completed')) {
+        if (e.data && (e.data.type === 'completed' || e.data.status === 'completed' || (typeof e.data === 'string' && e.data.includes('completed')))) {
           document.getElementById('signed-badge').classList.add('visible');
           document.getElementById('step3-next').disabled = false;
           window.removeEventListener('message', handler);
