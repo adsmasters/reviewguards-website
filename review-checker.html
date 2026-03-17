@@ -953,7 +953,7 @@
       const stars   = parseInt(r.review_star_rating) || 0;
       const text    = (r.review_comment || '').trim();
       const title   = (r.review_title  || '').trim();
-      const verified = r.verified_purchase;
+      const verified = r.is_verified_purchase || r.verified_purchase;
 
       // 1. Unverified + negative
       if (!verified && stars <= 2)
