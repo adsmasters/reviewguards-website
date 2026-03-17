@@ -63,6 +63,31 @@
     .empty-icon { font-size: 3.5rem; margin-bottom: 16px; opacity: 0.25; }
     .empty-title { font-size: 0.95rem; font-weight: 600; color: #6b7280; }
     .empty-sub { font-size: 0.82rem; color: #9ca3af; margin-top: 6px; }
+
+    /* MOBILE TOGGLE */
+    .mobile-toggle { display: none; align-items: center; justify-content: center; width: 40px; height: 40px; background: none; border: none; cursor: pointer; color: #fff; flex-shrink: 0; }
+    .mobile-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 199; }
+    .mobile-overlay.open { display: block; }
+    .mobile-topbar { display: none; }
+
+    @media (max-width: 768px) {
+      .sidebar { transform: translateX(-100%); transition: transform 0.3s; position: fixed; z-index: 200; }
+      .sidebar.open { transform: translateX(0); }
+      .main { margin-left: 0; }
+      .mobile-toggle { display: flex; }
+      .mobile-topbar { display: flex; align-items: center; gap: 10px; background: #0d1117; padding: 10px 16px; position: sticky; top: 0; z-index: 150; }
+      .mobile-topbar .sb-logo-icon { width: 28px; height: 28px; background: #3551FF; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-weight: 900; font-size: 0.65rem; color: #fff; }
+      .content { padding: 16px; }
+      .page-header { flex-direction: column; gap: 12px; }
+      .filter-select { width: 100%; }
+      .topbanner { padding: 10px 16px; flex-wrap: wrap; }
+      .banner-btn { margin-left: 0; margin-top: 6px; width: 100%; text-align: center; }
+      .stats-row { grid-template-columns: 1fr; }
+      .table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+      table { min-width: 550px; }
+      .tab-row { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+      .tab-btn { white-space: nowrap; }
+    }
   </style>
 </head>
 <body>
@@ -113,7 +138,16 @@
   </div>
 </aside>
 
+<div class="mobile-overlay" id="mobile-overlay"></div>
+
 <div class="main">
+  <div class="mobile-topbar">
+    <button class="mobile-toggle" id="mobile-toggle" aria-label="Menu">
+      <svg width="22" height="22" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
+    </button>
+    <div class="sb-logo-icon">RG</div>
+    <div style="font-weight:900;font-size:0.95rem;color:#fff;">Review<span style="color:#3551FF;">Guards</span></div>
+  </div>
   <div class="topbanner">
     <span class="banner-label">Neuer Auftrag</span>
     <span class="banner-title">Bewertungen entfernen lassen</span>
@@ -279,6 +313,16 @@
 
   document.getElementById('logout-btn').addEventListener('click', async () => {
     await sb.auth.signOut(); location.href = 'login.html';
+  });
+
+  // MOBILE SIDEBAR TOGGLE
+  document.getElementById('mobile-toggle').addEventListener('click', () => {
+    document.querySelector('.sidebar').classList.toggle('open');
+    document.getElementById('mobile-overlay').classList.toggle('open');
+  });
+  document.getElementById('mobile-overlay').addEventListener('click', () => {
+    document.querySelector('.sidebar').classList.remove('open');
+    document.getElementById('mobile-overlay').classList.remove('open');
   });
 
   init();
