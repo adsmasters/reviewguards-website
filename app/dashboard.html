@@ -447,6 +447,24 @@
           showToast('Fehler beim Speichern: ' + insertError.message, 'error');
           return;
         }
+        // Send email notification to team
+        try {
+          const { data: profile } = await sb.from('profiles').select('company_name, full_name').eq('user_id', currentUser.id).single();
+          const { data: product } = await sb.from('products').select('name').eq('id', id).single();
+          const { data: { session } } = await sb.auth.getSession();
+          await fetch('https://lgrnmiszhhahfcmctmwo.supabase.co/functions/v1/notify-new-cases', {
+            method: 'POST',
+            headers: { 'Authorization': 'Bearer ' + session.access_token, 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              customer_name: profile?.company_name || profile?.full_name || currentUser.email,
+              customer_email: currentUser.email,
+              asin,
+              product_name: product?.name || asin,
+              case_count: flagged.length,
+              cases: flagged.map(r => ({ review_rating: parseInt(r.review_star_rating) || 0, review_title: r.review_title || '', reasons: r.reasons }))
+            })
+          });
+        } catch(notifyErr) { console.warn('Notification failed:', notifyErr); }
         showToast(`✓ Analyse abgeschlossen: ${flagged.length} verdächtige Bewertung${flagged.length !== 1 ? 'en' : ''} von ${reviews.length} geprüften gefunden → Offene Fälle`, 'success');
         loadCasesBadge();
       } else {
