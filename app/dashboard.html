@@ -395,9 +395,13 @@
   }
 
   // ACTIVATE PRODUCT - fetch reviews and create cases
+  let activateHintShown = false;
   async function activateProduct(id, asin) {
-    const confirmed = confirm('Produkt aktivieren?\n\nWir analysieren automatisch die letzten 100 Bewertungen auf Richtlinienverstöße. Verdächtige Bewertungen findest du anschließend unter „Offene Fälle".\n\nMöchtest du fortfahren?');
-    if (!confirmed) return;
+    if (!activateHintShown) {
+      const confirmed = confirm('Produkt aktivieren?\n\nWir analysieren automatisch die letzten 100 Bewertungen auf Richtlinienverstöße. Verdächtige Bewertungen findest du anschließend unter „Offene Fälle".\n\nMöchtest du fortfahren?');
+      if (!confirmed) return;
+      activateHintShown = true;
+    }
     await toggleStatus(id, 'active');
     showToast('Aktiviert – analysiere Bewertungen…');
     try {
