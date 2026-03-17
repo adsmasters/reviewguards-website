@@ -527,11 +527,35 @@
       if (insertErr) { showToast('Fehler beim Eintragen in entfernte Bewertungen: ' + insertErr.message, 'error'); return; }
     }
 
+    // Send notification email to customer
+    const c = allCases.find(x => x.id === caseId);
+    if (c) {
+      try {
+        // Get customer email
+        const { data: users } = await sb.rpc('get_all_cases');
+        const caseData = (users || allCases).find(x => x.id === caseId);
+        const { data: authUser } = await sb.from('profiles').select('full_name').eq('user_id', c.user_id).single();
+
+        await fetch('https://lgrnmiszhhahfcmctmwo.supabase.co/functions/v1/notify-review-removed', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            user_id: c.user_id,
+            customer_name: caseData?.company_name || authUser?.full_name || '',
+            review_title: c.review_title,
+            review_rating: c.review_rating,
+            asin: caseData?.asin || c.asin || '',
+            product_name: caseData?.product_name || ''
+          })
+        });
+      } catch(e) { console.warn('Email notification failed:', e); }
+    }
+
     // Update local data
     allCases = allCases.map(c => c.id === caseId ? { ...c, status: 'removed' } : c);
     updateStats();
     renderCases();
-    showToast('Bewertung als entfernt markiert', 'success');
+    showToast('Bewertung als entfernt markiert – Kunde wurde benachrichtigt', 'success');
   }
 
   // =================== FILTERS ===================
