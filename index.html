@@ -1951,21 +1951,57 @@
       color: #d0d0d0;
     }
 
+    .calc-stepper {
+      display: flex;
+      align-items: center;
+      gap: 0;
+      border: 1px solid var(--gray-border);
+      border-radius: var(--radius);
+      overflow: hidden;
+    }
+
+    .calc-step-btn {
+      width: 36px;
+      height: 36px;
+      background: #f4f4f4;
+      border: none;
+      font-size: 1.2rem;
+      font-weight: 700;
+      color: var(--black);
+      cursor: pointer;
+      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: background 0.15s;
+    }
+
+    .calc-step-btn:active {
+      background: #e0e0e0;
+    }
+
     .calc-input {
-      width: 90px;
-      padding: 8px 10px;
+      width: 60px;
+      padding: 8px 4px;
       font-size: 1rem;
       font-family: Arial, Helvetica, sans-serif;
       font-weight: 600;
-      border: 1px solid var(--gray-border);
-      border-radius: var(--radius);
+      border: none;
+      border-left: 1px solid var(--gray-border);
+      border-right: 1px solid var(--gray-border);
       background: var(--white);
       color: var(--black);
-      text-align: left;
+      text-align: center;
       outline: none;
       transition: border-color 0.2s, box-shadow 0.2s;
-      appearance: auto;
-      -webkit-appearance: auto;
+      appearance: textfield;
+      -webkit-appearance: textfield;
+    }
+
+    .calc-input::-webkit-outer-spin-button,
+    .calc-input::-webkit-inner-spin-button {
+      -webkit-appearance: none;
+      margin: 0;
     }
 
     .calc-input:focus {
@@ -2483,31 +2519,31 @@
               <div class="calc-stars">
                 <span class="cs">★</span><span class="cs-empty">★</span><span class="cs-empty">★</span><span class="cs-empty">★</span><span class="cs-empty">★</span>
               </div>
-              <input class="calc-input" type="number" id="calc-1" min="0" value="0" placeholder="0">
+              <div class="calc-stepper"><button class="calc-step-btn" onclick="stepCalc('calc-1',-1)">−</button><input class="calc-input" type="number" id="calc-1" min="0" value="0" placeholder="0"><button class="calc-step-btn" onclick="stepCalc('calc-1',1)">+</button></div>
             </div>
             <div class="calc-row">
               <div class="calc-stars">
                 <span class="cs">★</span><span class="cs">★</span><span class="cs-empty">★</span><span class="cs-empty">★</span><span class="cs-empty">★</span>
               </div>
-              <input class="calc-input" type="number" id="calc-2" min="0" value="0" placeholder="0">
+              <div class="calc-stepper"><button class="calc-step-btn" onclick="stepCalc('calc-2',-1)">−</button><input class="calc-input" type="number" id="calc-2" min="0" value="0" placeholder="0"><button class="calc-step-btn" onclick="stepCalc('calc-2',1)">+</button></div>
             </div>
             <div class="calc-row">
               <div class="calc-stars">
                 <span class="cs">★</span><span class="cs">★</span><span class="cs">★</span><span class="cs-empty">★</span><span class="cs-empty">★</span>
               </div>
-              <input class="calc-input" type="number" id="calc-3" min="0" value="0" placeholder="0">
+              <div class="calc-stepper"><button class="calc-step-btn" onclick="stepCalc('calc-3',-1)">−</button><input class="calc-input" type="number" id="calc-3" min="0" value="0" placeholder="0"><button class="calc-step-btn" onclick="stepCalc('calc-3',1)">+</button></div>
             </div>
             <div class="calc-row">
               <div class="calc-stars">
                 <span class="cs">★</span><span class="cs">★</span><span class="cs">★</span><span class="cs">★</span><span class="cs-empty">★</span>
               </div>
-              <input class="calc-input" type="number" id="calc-4" min="0" value="0" placeholder="0">
+              <div class="calc-stepper"><button class="calc-step-btn" onclick="stepCalc('calc-4',-1)">−</button><input class="calc-input" type="number" id="calc-4" min="0" value="0" placeholder="0"><button class="calc-step-btn" onclick="stepCalc('calc-4',1)">+</button></div>
             </div>
             <div class="calc-row">
               <div class="calc-stars">
                 <span class="cs">★</span><span class="cs">★</span><span class="cs">★</span><span class="cs">★</span><span class="cs">★</span>
               </div>
-              <input class="calc-input" type="number" id="calc-5" min="0" value="0" placeholder="0">
+              <div class="calc-stepper"><button class="calc-step-btn" onclick="stepCalc('calc-5',-1)">−</button><input class="calc-input" type="number" id="calc-5" min="0" value="0" placeholder="0"><button class="calc-step-btn" onclick="stepCalc('calc-5',1)">+</button></div>
             </div>
           </div>
           <button class="calc-reset" id="calc-reset-btn">zurücksetzen</button>
@@ -3320,6 +3356,13 @@
 
 <script>
   // ========== BEWERTUNGSRECHNER ==========
+  function stepCalc(id, delta) {
+    const input = document.getElementById(id);
+    const val = parseInt(input.value) || 0;
+    input.value = Math.max(0, val + delta);
+    input.dispatchEvent(new Event('input'));
+  }
+
   (function() {
     const inputs = [1,2,3,4,5].map(i => document.getElementById('calc-' + i));
     const avgEl   = document.getElementById('calc-avg');
