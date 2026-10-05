@@ -80,7 +80,7 @@ serve(async (req) => {
 
           <p style="font-size:12px;color:#aaa;text-align:center;line-height:1.6;">
             ReviewGuards – ein Service der AdsMasters GmbH<br>
-            Arnulfstraße 33, 40545 Düsseldorf<br>
+            Lütticher Straße 132, 40547 Düsseldorf<br>
             <a href="mailto:team@reviewguards.de" style="color:#3551FF;">team@reviewguards.de</a>
           </p>
         </div>
